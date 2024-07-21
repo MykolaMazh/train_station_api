@@ -127,5 +127,4 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # project variables
-CARGO = 30
 MAX_ROUTE_DISTANCE = 5000

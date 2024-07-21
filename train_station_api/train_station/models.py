@@ -15,10 +15,16 @@ class Journey(models.Model):
     arrival_time = models.DateTimeField()
     crew = models.ManyToManyField("CrewMember", related_name="journeys")
 
+    def __str__(self):
+        return f"{self.route} - ({self.departure_time})"
+
 
 class CrewMember(models.Model):
     first_name = models.CharField(max_length=128)
     last_name = models.CharField(max_length=128)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
 
 
 class Route(models.Model):
@@ -32,21 +38,30 @@ class Route(models.Model):
         validators=[MaxValueValidator(settings.MAX_ROUTE_DISTANCE)]
     )
 
+    def __str__(self):
+        return f"{self.source} - {self.destination}"
+
 
 class Ticket(models.Model):
-    cargo = models.PositiveIntegerField(default=settings.CARGO)
-    seat_quantity = models.PositiveSmallIntegerField()
+    car = models.PositiveSmallIntegerField()
+    seat = models.PositiveSmallIntegerField()
     journey = models.ForeignKey(Journey, on_delete=models.DO_NOTHING)
     order = models.ForeignKey("Order", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.journey} /// car:{self.car} seat:{self.seat}"
 
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"{self.id} - {self.created_at}"
+
 
 class Station(models.Model):
-    name = models.CharField(max_length=150)
+    name = models.CharField(max_length=150, unique=True)
     longitude = models.FloatField(
         validators=[MaxValueValidator(90), MinValueValidator(-90)]
     )
@@ -54,13 +69,22 @@ class Station(models.Model):
         validators=[MaxValueValidator(180), MinValueValidator(-180)]
     )
 
+    def __str__(self):
+        return self.name
+
 
 class Train(models.Model):
-    name = models.CharField(max_length=100)
-    corgo_num = models.PositiveIntegerField()
-    places_in_cargo = models.PositiveIntegerField()
+    name = models.CharField(max_length=100, unique=True)
+    car_num = models.PositiveSmallIntegerField()
+    places_in_car = models.PositiveSmallIntegerField()
     _type = models.ForeignKey("TrainType", on_delete=models.DO_NOTHING)
+
+    def __str__(self):
+        return f"{self.name} - capacity:{self.places_in_car}"
 
 
 class TrainType(models.Model):
-    name = models.CharField(max_length=150)
+    name = models.CharField(max_length=150, unique=True)
+
+    def __str__(self):
+        return self.name
