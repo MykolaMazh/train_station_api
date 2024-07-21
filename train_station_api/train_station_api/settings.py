@@ -20,7 +20,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-v_zi43(+%fpv3u%&u)9bk62_z39ur-@818l^zpn!xjt9_7^&*j"
+SECRET_KEY = (
+    "django-insecure-v_zi43(+%fpv3u%&u)9bk62_z39ur-@818l^zpn!xjt9_7^&*j"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "train_station.apps.TrainStationConfig",
 ]
 
 MIDDLEWARE = [
@@ -121,3 +124,8 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# project variables
+CARGO = 30
+MAX_ROUTE_DISTANCE = 5000
