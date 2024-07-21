@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.contrib.auth.models import User, AbstractUser
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import UniqueConstraint, CheckConstraint, Q
 
 
 class Journey(models.Model):
@@ -50,6 +52,30 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"{self.journey} /// car:{self.car} seat:{self.seat}"
+
+    def clean(self):
+        journey = self.journey
+
+        current_journeys = Journey.objects.filter(
+            train=journey.train,
+            departure_time__lte=journey.departure_time,
+            arrival_time__gt=journey.departure_time,
+        )
+        for cur_j in current_journeys:
+            for ticket in cur_j.ticket_set.all():
+                if ticket.car == self.car:
+                    if ticket.seat == self.seat:
+                        raise ValidationError("The seat is not available")
+
+    def save(
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
+        self.full_clean()
+        return super().save(force_insert, force_update, using, update_fields)
 
 
 class Order(models.Model):
