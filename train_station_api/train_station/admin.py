@@ -9,6 +9,7 @@ from train_station.models import (
     Station,
     Order,
     Route,
+    IntermediateStation,
 )
 
 admin.site.register(Train)
@@ -19,3 +20,4 @@ admin.site.register(Ticket)
 admin.site.register(Station)
 admin.site.register(Order)
 admin.site.register(Route)
+admin.site.register(IntermediateStation)

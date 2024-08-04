@@ -106,6 +106,25 @@ class Station(models.Model):
         return self.name
 
 
+class IntermediateStation(models.Model):
+    route_ordinal_station_number = models.PositiveSmallIntegerField()
+    name = models.ForeignKey(
+        Station, related_name="intermediate_stations", on_delete=models.CASCADE
+    )
+
+    arrival = models.DateTimeField()
+    departure = models.DateTimeField()
+    route_distance_already_passed_km = models.SmallIntegerField()
+    journey = models.ForeignKey(
+        Journey,
+        on_delete=models.CASCADE,
+        related_name="journey_intermediate_stations",
+    )
+
+    def __str__(self):
+        return f"{self.name}"
+
+
 class Train(models.Model):
     name = models.CharField(max_length=100, unique=True)
     car_num = models.PositiveSmallIntegerField()
