@@ -29,14 +29,6 @@ class CrewMember(models.Model):
 
 
 class Route(models.Model):
-    start_route_station = models.ForeignKey(
-        "Station",
-        on_delete=models.CASCADE,
-        related_name="start_station_routes",
-    )
-    end_route_station = models.ForeignKey(
-        "Station", on_delete=models.CASCADE, related_name="start_station_ends"
-    )
     source = models.ForeignKey(
         "Station", on_delete=models.CASCADE, related_name="source_routes"
     )
@@ -78,8 +70,6 @@ class Ticket(models.Model):
             tickets = {}
 
             def get_source_number(ticket):
-                f = self.journey.journey_intermediate_stations.all()
-                f1 = f[0].name
                 return (
                     self.journey.journey_intermediate_stations.get(
                         name=ticket.departure_station
