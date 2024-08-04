@@ -1,2 +1,4 @@
 venv
 .idea/
+.flake8
+db.sqlite3

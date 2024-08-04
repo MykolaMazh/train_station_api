@@ -3,7 +3,6 @@ from django.contrib.auth.models import User, AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import UniqueConstraint, CheckConstraint, Q
 
 
 class Journey(models.Model):
@@ -30,6 +29,14 @@ class CrewMember(models.Model):
 
 
 class Route(models.Model):
+    start_route_station = models.ForeignKey(
+        "Station",
+        on_delete=models.CASCADE,
+        related_name="start_station_routes",
+    )
+    end_route_station = models.ForeignKey(
+        "Station", on_delete=models.CASCADE, related_name="start_station_ends"
+    )
     source = models.ForeignKey(
         "Station", on_delete=models.CASCADE, related_name="source_routes"
     )
