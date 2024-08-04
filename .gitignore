@@ -1,2 +1,5 @@
 venv
 .idea/
+db.sqlite3
+schema.png
+db.json
