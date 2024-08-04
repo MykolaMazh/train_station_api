@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import User, AbstractUser
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -41,7 +41,9 @@ class Route(models.Model):
         "Station", on_delete=models.CASCADE, related_name="source_routes"
     )
     destination = models.ForeignKey(
-        "Station", on_delete=models.CASCADE, related_name="destination_routes"
+        "Station",
+        on_delete=models.CASCADE,
+        related_name="destination_routes",
     )
     distance = models.PositiveIntegerField(
         validators=[MaxValueValidator(settings.MAX_ROUTE_DISTANCE)]
@@ -52,27 +54,78 @@ class Route(models.Model):
 
 
 class Ticket(models.Model):
+    departure_station = models.ForeignKey(
+        "Station", on_delete=models.CASCADE, related_name="departure_tickets"
+    )
+    arrival_station = models.ForeignKey(
+        "Station", on_delete=models.CASCADE, related_name="arrival_tickets"
+    )
     car = models.PositiveSmallIntegerField()
     seat = models.PositiveSmallIntegerField()
     journey = models.ForeignKey(Journey, on_delete=models.DO_NOTHING)
     order = models.ForeignKey("Order", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.journey} /// car:{self.car} seat:{self.seat}"
+        return f"{self.departure_station} - {self.arrival_station} /// car:{self.car} seat:{self.seat} /// {self.journey}"
 
     def clean(self):
-        journey = self.journey
 
-        current_journeys = Journey.objects.filter(
-            train=journey.train,
-            departure_time__lte=journey.departure_time,
-            arrival_time__gt=journey.departure_time,
+        same_seat_querry = self.journey.ticket_set.filter(
+            car=self.car, seat=self.seat
         )
-        for cur_j in current_journeys:
-            for ticket in cur_j.ticket_set.all():
-                if ticket.car == self.car:
-                    if ticket.seat == self.seat:
+        if same_seat_querry:
+            tickets = {}
+
+            def get_source_number(ticket):
+                f = self.journey.journey_intermediate_stations.all()
+                f1 = f[0].name
+                return (
+                    self.journey.journey_intermediate_stations.get(
+                        name=ticket.departure_station
+                    ).route_ordinal_station_number
+                    if ticket.departure_station != self.journey.route.source
+                    else 0
+                )
+
+            def get_destination_number(ticket):
+                return (
+                    self.journey.journey_intermediate_stations.get(
+                        name=ticket.arrival_station
+                    ).route_ordinal_station_number
+                    if ticket.arrival_station != self.journey.route.destination
+                    else 1000
+                )
+
+            try:
+                requested_source = get_source_number(self)
+                requested_destination = get_destination_number(self)
+                for ticket in same_seat_querry:
+                    tickets.update(
+                        {
+                            ticket: {
+                                "sorce_number": get_source_number(ticket),
+                                "destination_number": get_destination_number(
+                                    ticket
+                                ),
+                            }
+                        }
+                    )
+
+                for ticket in tickets:
+                    if (
+                        ticket.departure_station == self.journey.route.source
+                        and ticket.arrival_station
+                        == self.journey.route.destination
+                    ) or (
+                        requested_source < get_destination_number(ticket)
+                        and requested_destination > get_source_number(ticket)
+                    ):
                         raise ValidationError("The seat is not available")
+            except ObjectDoesNotExist:
+                raise ValidationError(
+                    "You cannot reach the desired station by this train."
+                )
 
     def save(
         self,
@@ -104,6 +157,25 @@ class Station(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class IntermediateStation(models.Model):
+    route_ordinal_station_number = models.PositiveSmallIntegerField()
+    name = models.ForeignKey(
+        Station, related_name="intermediate_stations", on_delete=models.CASCADE
+    )
+
+    arrival = models.DateTimeField()
+    departure = models.DateTimeField()
+    route_distance_already_passed_km = models.SmallIntegerField()
+    journey = models.ForeignKey(
+        Journey,
+        on_delete=models.CASCADE,
+        related_name="journey_intermediate_stations",
+    )
+
+    def __str__(self):
+        return f"{self.name}"
 
 
 class Train(models.Model):
