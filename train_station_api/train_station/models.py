@@ -45,13 +45,20 @@ class Route(models.Model):
 
 
 class Ticket(models.Model):
+    departure_station = models.ForeignKey(
+        "Station", on_delete=models.CASCADE, related_name="departure_tickets"
+    )
+    arrival_station = models.ForeignKey(
+        "Station", on_delete=models.CASCADE, related_name="arrival_tickets"
+    )
     car = models.PositiveSmallIntegerField()
     seat = models.PositiveSmallIntegerField()
     journey = models.ForeignKey(Journey, on_delete=models.DO_NOTHING)
     order = models.ForeignKey("Order", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.journey} /// car:{self.car} seat:{self.seat}"
+        return f"{self.departure_station} - {self.arrival_station} /// car:{self.car} seat:{self.seat} /// {self.journey}"
 
     def clean(self):
         journey = self.journey
