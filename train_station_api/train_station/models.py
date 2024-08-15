@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.contrib.auth.models import User, AbstractUser
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -17,7 +17,10 @@ class Journey(models.Model):
     crew = models.ManyToManyField("CrewMember", related_name="journeys")
 
     def __str__(self):
-        return f"{self.route} - ({self.departure_time})"
+        self_select_related = Journey.objects.filter(id=self.id).select_related(
+            "route"
+        )[0]
+        return f"{self_select_related.route} - ({self_select_related.departure_time})"
 
 
 class CrewMember(models.Model):
@@ -42,7 +45,10 @@ class Route(models.Model):
     )
 
     def __str__(self):
-        return f"{self.source} - {self.destination}"
+        self_related = Route.objects.filter(id=self.id).select_related(
+            "source", "destination"
+        )[0]
+        return f"{self_related.source} - {self_related.destination}"
 
 
 class Ticket(models.Model):
@@ -59,13 +65,13 @@ class Ticket(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.departure_station} - {self.arrival_station} /// car:{self.car} seat:{self.seat} /// {self.journey}"
+        self_related = Ticket.objects.filter(id=self.id).select_related(
+            "departure_station", "arrival_station", "journey"
+        )[0]
+        return f"{self_related.departure_station} - {self_related.arrival_station} /// car:{self.car} seat:{self.seat} /// {self_related.journey}"
 
     def clean(self):
-
-        same_seat_querry = self.journey.ticket_set.filter(
-            car=self.car, seat=self.seat
-        )
+        same_seat_querry = self.journey.ticket_set.filter(car=self.car, seat=self.seat)
         if same_seat_querry:
             tickets = {}
 
@@ -95,9 +101,7 @@ class Ticket(models.Model):
                         {
                             ticket: {
                                 "sorce_number": get_source_number(ticket),
-                                "destination_number": get_destination_number(
-                                    ticket
-                                ),
+                                "destination_number": get_destination_number(ticket),
                             }
                         }
                     )
@@ -105,8 +109,7 @@ class Ticket(models.Model):
                 for ticket in tickets:
                     if (
                         ticket.departure_station == self.journey.route.source
-                        and ticket.arrival_station
-                        == self.journey.route.destination
+                        and ticket.arrival_station == self.journey.route.destination
                     ) or (
                         requested_source < get_destination_number(ticket)
                         and requested_destination > get_source_number(ticket)
