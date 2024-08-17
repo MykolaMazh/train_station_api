@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -17,9 +17,9 @@ class Journey(models.Model):
     crew = models.ManyToManyField("CrewMember", related_name="journeys")
 
     def __str__(self):
-        self_select_related = Journey.objects.filter(id=self.id).select_related(
-            "route"
-        )[0]
+        self_select_related = Journey.objects.filter(
+            id=self.id
+        ).select_related("route")[0]
         return f"{self_select_related.route} - ({self_select_related.departure_time})"
 
 
@@ -68,57 +68,61 @@ class Ticket(models.Model):
         self_related = Ticket.objects.filter(id=self.id).select_related(
             "departure_station", "arrival_station", "journey"
         )[0]
-        return f"{self_related.departure_station} - {self_related.arrival_station} /// car:{self.car} seat:{self.seat} /// {self_related.journey}"
+        return (
+            f"{self_related.departure_station} - {self_related.arrival_station}"
+            f" /// car:{self.car} seat:{self.seat}"
+            f" /// {self_related.journey}"
+        )
 
     def clean(self):
-        same_seat_querry = self.journey.ticket_set.filter(car=self.car, seat=self.seat)
+        journey_source = self.journey.route.source
+        journey_destination = self.journey.route.destination
+
+        def get_station_number(station):
+            if station not in (journey_source, journey_destination):
+                return self.journey.journey_intermediate_stations.get(
+                    name=station
+                ).route_ordinal_station_number
+            elif station == journey_source:
+                return 0
+            return 1000
+
+        requested_departure_number = get_station_number(self.departure_station)
+        requested_arrival_number = get_station_number(self.arrival_station)
+
+        if requested_arrival_number <= requested_departure_number:
+            raise ValidationError("Invalid connection for this route.")
+
+        same_seat_querry = self.journey.ticket_set.filter(
+            car=self.car, seat=self.seat
+        )
         if same_seat_querry:
             tickets = {}
 
-            def get_source_number(ticket):
-                return (
-                    self.journey.journey_intermediate_stations.get(
-                        name=ticket.departure_station
-                    ).route_ordinal_station_number
-                    if ticket.departure_station != self.journey.route.source
-                    else 0
-                )
-
-            def get_destination_number(ticket):
-                return (
-                    self.journey.journey_intermediate_stations.get(
-                        name=ticket.arrival_station
-                    ).route_ordinal_station_number
-                    if ticket.arrival_station != self.journey.route.destination
-                    else 1000
-                )
-
-            try:
-                requested_source = get_source_number(self)
-                requested_destination = get_destination_number(self)
-                for ticket in same_seat_querry:
-                    tickets.update(
-                        {
-                            ticket: {
-                                "sorce_number": get_source_number(ticket),
-                                "destination_number": get_destination_number(ticket),
-                            }
+            for ticket in same_seat_querry:
+                tickets.update(
+                    {
+                        ticket: {
+                            "departure_number": get_station_number(
+                                ticket.departure_station
+                            ),
+                            "arrival_number": get_station_number(
+                                ticket.arrival_station
+                            ),
                         }
-                    )
-
-                for ticket in tickets:
-                    if (
-                        ticket.departure_station == self.journey.route.source
-                        and ticket.arrival_station == self.journey.route.destination
-                    ) or (
-                        requested_source < get_destination_number(ticket)
-                        and requested_destination > get_source_number(ticket)
-                    ):
-                        raise ValidationError("The seat is not available")
-            except ObjectDoesNotExist:
-                raise ValidationError(
-                    "You cannot reach the desired station by this train."
+                    }
                 )
+
+            for ticket, end_stations in tickets.items():
+                if (
+                    ticket.departure_station == journey_source
+                    and ticket.arrival_station == journey_destination
+                ) or (
+                    requested_departure_number < end_stations["arrival_number"]
+                    or requested_arrival_number
+                    > end_stations["arrival_number"]
+                ):
+                    raise ValidationError("The seat is not available")
 
     def save(
         self,
