@@ -43,6 +43,18 @@ class Route(models.Model):
     distance = models.PositiveIntegerField(
         validators=[MaxValueValidator(settings.MAX_ROUTE_DISTANCE)]
     )
+    no_journey_month_days = models.CharField(
+        max_length=256,
+        help_text="list of days. Example [12, 18, 31]",
+        null=True,
+        blank=True,
+    )
+    no_journey_week_days = models.CharField(
+        max_length=256,
+        help_text="list of week days. Example [0, 4]",
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         self_related = Route.objects.filter(id=self.id).select_related(
