@@ -72,7 +72,9 @@ class Ticket(models.Model):
     )
     car = models.PositiveSmallIntegerField()
     seat = models.PositiveSmallIntegerField()
-    journey = models.ForeignKey(Journey, on_delete=models.DO_NOTHING)
+    journey = models.ForeignKey(
+        Journey, on_delete=models.DO_NOTHING, related_name="tickets"
+    )
     order = models.ForeignKey("Order", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -92,20 +94,27 @@ class Ticket(models.Model):
 
         def get_station_number(station):
             if station not in (journey_source, journey_destination):
-                return self.journey.journey_intermediate_stations.get(
+                return self.journey.route.route_intermediate_stations.get(
                     name=station
                 ).route_ordinal_station_number
             elif station == journey_source:
                 return 0
             return 1000
 
-        requested_departure_number = get_station_number(self.departure_station)
-        requested_arrival_number = get_station_number(self.arrival_station)
+        requested_departure_station_number = get_station_number(
+            self.departure_station
+        )
+        requested_arrival_station_number = get_station_number(
+            self.arrival_station
+        )
 
-        if requested_arrival_number <= requested_departure_number:
+        if (
+            requested_arrival_station_number
+            <= requested_departure_station_number
+        ):
             raise ValidationError("Invalid connection for this route.")
 
-        same_seat_querry = self.journey.ticket_set.filter(
+        same_seat_querry = self.journey.tickets.filter(
             car=self.car, seat=self.seat
         )
         if same_seat_querry:
@@ -130,8 +139,9 @@ class Ticket(models.Model):
                     ticket.departure_station == journey_source
                     and ticket.arrival_station == journey_destination
                 ) or (
-                    requested_departure_number < end_stations["arrival_number"]
-                    or requested_arrival_number
+                    requested_departure_station_number
+                    < end_stations["arrival_number"]
+                    or requested_arrival_station_number
                     > end_stations["arrival_number"]
                 ):
                     raise ValidationError("The seat is not available")
@@ -169,7 +179,10 @@ class Station(models.Model):
 
 
 class IntermediateStation(models.Model):
-    route_ordinal_station_number = models.PositiveSmallIntegerField()
+    route_ordinal_station_number = models.PositiveSmallIntegerField(
+        help_text="ordinal number from route source",
+        validators=[MinValueValidator(1)],
+    )
     name = models.ForeignKey(
         Station, related_name="intermediate_stations", on_delete=models.CASCADE
     )
