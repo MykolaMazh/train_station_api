@@ -174,13 +174,19 @@ class IntermediateStation(models.Model):
         Station, related_name="intermediate_stations", on_delete=models.CASCADE
     )
 
-    arrival = models.DateTimeField()
-    departure = models.DateTimeField()
+    arrival_list = models.CharField(
+        max_length=256,
+        help_text="list of all arrivals\nExample [[10, 23], [17,21], [19,13]]",
+    )
+    departure_list = models.CharField(
+        max_length=256,
+        help_text="list of all departures\nExample [[10, 23], [17,21], [19,13]]",
+    )
     route_distance_already_passed_km = models.SmallIntegerField()
-    journey = models.ForeignKey(
-        Journey,
+    route = models.ForeignKey(
+        Route,
         on_delete=models.CASCADE,
-        related_name="journey_intermediate_stations",
+        related_name="route_intermediate_stations",
     )
 
     def __str__(self):
