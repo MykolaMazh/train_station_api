@@ -12,8 +12,8 @@ class Journey(models.Model):
     train = models.ForeignKey(
         "Train", related_name="journeys", on_delete=models.SET_NULL, null=True
     )
-    departure_time = models.DateTimeField()
-    arrival_time = models.DateTimeField()
+    arrival_time = models.TimeField()
+    departure_time = models.TimeField()
     crew = models.ManyToManyField("CrewMember", related_name="journeys")
 
     def __str__(self):
