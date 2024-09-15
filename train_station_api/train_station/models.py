@@ -9,18 +9,21 @@ class Journey(models.Model):
     route = models.ForeignKey(
         "Route", related_name="journeys", on_delete=models.CASCADE
     )
+    route_journey_number = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1)]
+    )
     train = models.ForeignKey(
         "Train", related_name="journeys", on_delete=models.SET_NULL, null=True
     )
-    arrival_time = models.TimeField()
-    departure_time = models.TimeField()
     crew = models.ManyToManyField("CrewMember", related_name="journeys")
+    departure_time = models.TimeField()
+    arrival_time = models.TimeField()
 
     def __str__(self):
-        self_select_related = Journey.objects.filter(
-            id=self.id
-        ).select_related("route")[0]
-        return f"{self_select_related.route} - ({self_select_related.departure_time})"
+        return f"{self.route}({self.departure_time})"
+
+    class Meta:
+        ordering = ["route_journey_number"]
 
 
 class CrewMember(models.Model):
@@ -70,8 +73,9 @@ class Ticket(models.Model):
     arrival_station = models.ForeignKey(
         "Station", on_delete=models.CASCADE, related_name="arrival_tickets"
     )
-    car = models.PositiveSmallIntegerField()
-    seat = models.PositiveSmallIntegerField()
+    journey_date = models.DateField()
+    car = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    seat = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
     journey = models.ForeignKey(
         Journey, on_delete=models.DO_NOTHING, related_name="tickets"
     )
