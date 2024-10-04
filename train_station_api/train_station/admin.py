@@ -31,7 +31,7 @@ class IntermediateStationIncluded(admin.StackedInline):
 
 
 class RouteAdmin(admin.ModelAdmin):
-    inlines = [IntermediateStationIncluded, JourneyIncluded]
+    inlines = [JourneyIncluded, IntermediateStationIncluded]
 
 
 admin.site.register(Train)

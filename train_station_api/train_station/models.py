@@ -20,7 +20,7 @@ class Journey(models.Model):
     arrival_time = models.TimeField()
 
     def __str__(self):
-        return f"{self.route}({self.departure_time})"
+        return f"{self.route}{self.departure_time}"
 
     class Meta:
         ordering = ["route_journey_number"]
@@ -193,11 +193,15 @@ class IntermediateStation(models.Model):
 
     arrival_list = models.CharField(
         max_length=256,
-        help_text="list of all arrivals\nExample [[10, 23], [17,21], [19,13]]",
+        help_text="list of all arrivals in format [[journey#1_hours, journey#1_minutes], "
+        "[journey#2_hours, journey#2_minutes], [journey#3_hours, journey#3_minutes]]"
+        "Example: [[17,21], [19,30], [23,12]",
     )
     departure_list = models.CharField(
         max_length=256,
-        help_text="list of all departures\nExample [[10, 23], [17,21], [19,13]]",
+        help_text="list of all departures in format [[journey#1_hours, journey#1_minutes], "
+        "[journey#2_hours, journey#2_minutes], [journey#3_hours, journey#3_minutes]]"
+        "Example: [[20,21], [22,30], [2,12]",
     )
     route_distance_already_passed_km = models.SmallIntegerField()
     route = models.ForeignKey(
