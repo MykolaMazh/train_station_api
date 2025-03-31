@@ -5,8 +5,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, generics, mixins, viewsets
 
-from train_station.models import Journey, CrewMember, Station
-from train_station.serializers import JourneySerializer, CrewMemberSerializer, StationSerializer
+from train_station.models import Journey, CrewMember, Station, Train
+from train_station.serializers import (
+    JourneySerializer,
+    CrewMemberSerializer,
+    StationSerializer,
+    TrainSerializer, TrainListSerializer,
+)
 
 
 class CrewMemberViewSet(viewsets.ModelViewSet):
@@ -21,8 +26,17 @@ class StationViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
 
 
+class TrainViewSet(viewsets.ModelViewSet):
+    queryset = Train.objects.all()
+    permission_classes = (IsAdminUser,)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return TrainSerializer
+        return TrainListSerializer
+
+
 class JourneyViewSet(viewsets.ModelViewSet):
     queryset = Journey.objects.all()
     serializer_class = JourneySerializer
-
 
