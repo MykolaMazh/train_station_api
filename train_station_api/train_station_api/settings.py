@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django_extensions",  # can be deleted
     "debug_toolbar",
     "train_station.apps.TrainStationConfig",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -132,6 +133,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ]
+}
 
 
 # project variables

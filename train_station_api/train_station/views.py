@@ -1,3 +1,28 @@
-from django.shortcuts import render
+from rest_framework.decorators import api_view
+from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status, generics, mixins, viewsets
 
-# Create your views here.
+from train_station.models import Journey, CrewMember, Station
+from train_station.serializers import JourneySerializer, CrewMemberSerializer, StationSerializer
+
+
+class CrewMemberViewSet(viewsets.ModelViewSet):
+    queryset = CrewMember.objects.all()
+    serializer_class = CrewMemberSerializer
+    permission_classes = (IsAdminUser,)
+
+
+class StationViewSet(viewsets.ModelViewSet):
+    queryset = Station.objects.all()
+    serializer_class = StationSerializer
+    permission_classes = (IsAdminUser,)
+
+
+class JourneyViewSet(viewsets.ModelViewSet):
+    queryset = Journey.objects.all()
+    serializer_class = JourneySerializer
+
+
