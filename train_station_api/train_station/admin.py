@@ -9,8 +9,23 @@ from train_station.models import (
     Station,
     Order,
     Route,
-    IntermediateStation,
+    JourneyStation,
+RouteStation
 )
+
+
+class JourneyStationIncluded(admin.StackedInline):
+    model = JourneyStation
+    extra = 0
+
+class RouteStationIncluded(admin.StackedInline):
+    model = RouteStation
+    extra = 0
+
+
+class JourneyAdmin(admin.ModelAdmin):
+    inlines = [JourneyStationIncluded]
+    # list_display = ["route"]
 
 
 class JourneyIncluded(admin.StackedInline):
@@ -25,21 +40,17 @@ class TicketAdmin(admin.ModelAdmin):
     save_as = True
 
 
-class IntermediateStationIncluded(admin.StackedInline):
-    model = IntermediateStation
-    extra = 0
-
-
 class RouteAdmin(admin.ModelAdmin):
-    inlines = [JourneyIncluded, IntermediateStationIncluded]
+    inlines = [RouteStationIncluded, JourneyIncluded]
 
 
 admin.site.register(Train)
-admin.site.register(Journey)
+# admin.site.register(Journey, JourneyAdmin)
+admin.site.register(Journey, JourneyAdmin)
 admin.site.register(CrewMember)
 admin.site.register(TrainType)
 admin.site.register(Ticket, TicketAdmin)
 admin.site.register(Station)
 admin.site.register(Order)
 admin.site.register(Route, RouteAdmin)
-admin.site.register(IntermediateStation)
+# admin.site.register(IntermediateStation)
