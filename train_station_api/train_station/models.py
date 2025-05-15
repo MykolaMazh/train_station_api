@@ -18,21 +18,19 @@ class Journey(models.Model):
     crew = models.ManyToManyField("CrewMember", related_name="journeys")
     departure_time = models.TimeField()
     arrival_time = models.TimeField()
-    no_journey_month_days = models.CharField(
-        max_length=256,
+    no_journey_month_days = models.JSONField(
         help_text="list of days. Example [12, 18, 31]",
         null=True,
         blank=True,
     )
-    no_journey_week_days = models.CharField(
-        max_length=256,
+    no_journey_week_days = models.JSONField(
         help_text="list of week days. Example [0, 4]",
         blank=True,
         null=True,
     )
 
     def __str__(self):
-        return f"{self.route}{self.departure_time}"
+        return f"{self.route} /{self.departure_time.strftime('%H:%M')}/"
 
     class Meta:
         ordering = ["route_journey_number"]
@@ -61,10 +59,7 @@ class Route(models.Model):
 
 
     def __str__(self):
-        self_related = Route.objects.filter(id=self.id).select_related(
-            "source", "destination"
-        )[0]
-        return f"{self_related.source} - {self_related.destination}"
+        return f"{self.source} - {self.destination}"
 
 
 class Ticket(models.Model):
