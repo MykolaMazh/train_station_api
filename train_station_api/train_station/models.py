@@ -1,8 +1,11 @@
+import datetime
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import Q
 
 
 class Journey(models.Model):
@@ -56,7 +59,6 @@ class Route(models.Model):
     distance = models.PositiveIntegerField(
         validators=[MaxValueValidator(settings.MAX_ROUTE_DISTANCE)]
     )
-
 
     def __str__(self):
         return f"{self.source} - {self.destination}"
@@ -215,40 +217,59 @@ class Station(models.Model):
         validators=[MaxValueValidator(180), MinValueValidator(-180)]
     )
 
+    @staticmethod
+    def get_station_number(station: "Station", route: Route):
+        if station not in (route.source, route.destination):
+            return route.route_stations.get(
+                station=station
+            ).route_ordinal_station_number
+        elif station == route.source:
+            return 0
+        return 1000
+
     def __str__(self):
         return self.name
 
 
-class IntermediateStation(models.Model):
-    route_ordinal_station_number = models.PositiveSmallIntegerField(
-        help_text="ordinal number from route source",
-        validators=[MinValueValidator(1)],
-    )
-    name = models.ForeignKey(
-        Station, related_name="intermediate_stations", on_delete=models.CASCADE
-    )
+class RouteStation(models.Model):
+    """Defines stations along a route, independent of specific journeys."""
 
-    arrival_list = models.CharField(
-        max_length=256,
-        help_text="list of all arrivals in format [[journey#1_hours, journey#1_minutes], "
-        "[journey#2_hours, journey#2_minutes], [journey#3_hours, journey#3_minutes]]"
-        "Example: [[17,21], [19,30], [23,12]",
-    )
-    departure_list = models.CharField(
-        max_length=256,
-        help_text="list of all departures in format [[journey#1_hours, journey#1_minutes], "
-        "[journey#2_hours, journey#2_minutes], [journey#3_hours, journey#3_minutes]]"
-        "Example: [[20,21], [22,30], [2,12]",
-    )
-    route_distance_already_passed_km = models.SmallIntegerField()
     route = models.ForeignKey(
-        Route,
-        on_delete=models.CASCADE,
-        related_name="route_intermediate_stations",
+        Route, on_delete=models.CASCADE, related_name="route_stations"
     )
+    station = models.ForeignKey(
+        Station, on_delete=models.CASCADE, related_name="route_stations"
+    )
+    route_ordinal_station_number = models.PositiveSmallIntegerField(
+        help_text="Ordinal number from route source"
+    )
+    route_distance_already_passed_km = models.PositiveSmallIntegerField()
+
+    class Meta:
+        unique_together = ("route", "station")  # Prevents duplicates
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.station.name} on {self.route}"
+
+
+class JourneyStation(models.Model):
+    """Maps stations to specific journeys with arrival and departure times."""
+
+    journey = models.ForeignKey(
+        Journey, on_delete=models.CASCADE, related_name="journey_stations"
+    )
+    route_station = models.ForeignKey(
+        RouteStation, on_delete=models.CASCADE, related_name="journey_stations"
+    )
+
+    arrival_time = models.TimeField(null=True, blank=True)
+    departure_time = models.TimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("journey", "route_station")  # Prevents duplicates
+
+    def __str__(self):
+        return f"{self.route_station.station.name} ({self.journey})"
 
 
 class Train(models.Model):
