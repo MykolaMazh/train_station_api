@@ -88,24 +88,77 @@ class Ticket(models.Model):
             f" /// {self_related.journey}"
         )
 
-    def clean(self):
-        journey_source = self.journey.route.source
-        journey_destination = self.journey.route.destination
+    @property
+    def arrival_datetime(self):
+        arrival_journey_station = self.journey.journey_stations.filter(
+            route_station__station=self.arrival_station
+        ).first()
+        if arrival_journey_station:
+            if (
+                arrival_journey_station.arrival_time
+                >= self.departure_datetime.time()
+            ):
+                return datetime.datetime.combine(
+                    self.journey_date, arrival_journey_station.arrival_time
+                )
+            return datetime.datetime.combine(
+                self.journey_date + datetime.timedelta(days=1),
+                arrival_journey_station.arrival_time,
+            )
 
-        def get_station_number(station):
-            if station not in (journey_source, journey_destination):
-                return self.journey.route.route_intermediate_stations.get(
-                    name=station
-                ).route_ordinal_station_number
-            elif station == journey_source:
-                return 0
-            return 1000
+        else:
+            if self.journey.arrival_time >= self.departure_datetime.time():
+                return datetime.datetime.combine(
+                    self.journey_date, self.journey.arrival_time
+                )
+            return datetime.datetime.combine(
+                self.journey_date + datetime.timedelta(days=1),
+                self.journey.arrival_time,
+            )
 
-        requested_departure_station_number = get_station_number(
-            self.departure_station
+    @property
+    def departure_datetime(self):
+        departure_journey_station = self.journey.journey_stations.filter(
+            route_station__station=self.departure_station
+        ).first()
+        if departure_journey_station:
+            return datetime.datetime.combine(
+                self.journey_date, departure_journey_station.departure_time
+            )
+        return datetime.datetime.combine(
+            self.journey_date, self.journey.departure_time
         )
-        requested_arrival_station_number = get_station_number(
-            self.arrival_station
+
+    def clean(self):
+        # Validate if the ticket's journey date is not in the no_journey_month_days or no_journey_week_days
+        journey_day = self.journey_date.day
+        journey_weekday = self.journey_date.weekday()  # 0 = Monday, 6 = Sunday
+
+        # 1. Check if the journey date's day of the month is in no_journey_month_days
+        if (
+            self.journey.no_journey_month_days
+            and journey_day in self.journey.no_journey_month_days
+        ):
+            raise ValidationError(
+                f"Journey does not operate on day {journey_day} of the month."
+            )
+
+        # 2. Check if the journey date's weekday is in no_journey_week_days
+        if (
+            self.journey.no_journey_week_days
+            and journey_weekday in self.journey.no_journey_week_days
+        ):
+            raise ValidationError(
+                f"Journey does not operate on weekday {journey_weekday}."
+            )
+
+        # Proceed with the rest of the validation (station order and seat availability)
+
+        requested_departure_station_number = Station.get_station_number(
+            self.departure_station, self.journey.route
+        )
+        requested_arrival_station_number = Station.get_station_number(
+            self.arrival_station, self.journey.route
         )
 
         if (
@@ -115,34 +168,22 @@ class Ticket(models.Model):
             raise ValidationError("Invalid connection for this route.")
 
         same_seat_querry = self.journey.tickets.filter(
-            car=self.car, seat=self.seat
+            car=self.car,
+            seat=self.seat,
+            journey_date__gte=self.journey_date - datetime.timedelta(days=1),
+            journey_date__lt=self.journey_date + datetime.timedelta(days=1),
         )
+
         if same_seat_querry:
-            tickets = {}
-
             for ticket in same_seat_querry:
-                tickets.update(
-                    {
-                        ticket: {
-                            "departure_number": get_station_number(
-                                ticket.departure_station
-                            ),
-                            "arrival_number": get_station_number(
-                                ticket.arrival_station
-                            ),
-                        }
-                    }
-                )
-
-            for ticket, end_stations in tickets.items():
                 if (
-                    ticket.departure_station == journey_source
-                    and ticket.arrival_station == journey_destination
+                    ticket.departure_datetime
+                    <= self.departure_datetime
+                    < ticket.arrival_datetime
                 ) or (
-                    requested_departure_station_number
-                    < end_stations["arrival_number"]
-                    or requested_arrival_station_number
-                    > end_stations["arrival_number"]
+                    ticket.departure_datetime
+                    < self.arrival_datetime
+                    <= ticket.arrival_datetime
                 ):
                     raise ValidationError("The seat is not available")
 
@@ -153,7 +194,7 @@ class Ticket(models.Model):
         using=None,
         update_fields=None,
     ):
-        self.full_clean()
+        self.full_clean()  # Calls the clean method before saving
         return super().save(force_insert, force_update, using, update_fields)
 
 
