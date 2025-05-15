@@ -151,10 +151,16 @@ class RouteListSerializer(serializers.ModelSerializer):
         return [rs.station.name for rs in route_stations]
 
 
-
-class JourneySerializer(serializers.ModelSerializer):
+class RouteJourneysSerializer(serializers.ModelSerializer):
     class Meta:
         model = Journey
-        fields = "__all__"
-
-
+        fields = [
+            "id",
+            "route_journey_number",
+            "train",
+            "crew",
+            "departure_time",
+            "arrival_time",
+            "no_journey_month_days",
+            "no_journey_week_days",
+        ]
