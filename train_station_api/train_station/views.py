@@ -25,6 +25,7 @@ from train_station.serializers import (
     RouteListSerializer,
     RouteRetrieveSerializer,
     RouteJourneysSerializer,
+    RouteJourneysListSerializer,
 )
 
 
@@ -82,7 +83,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
 
 
 class RouteJourneysViewSet(viewsets.ModelViewSet):
-    serializer_class = RouteJourneysSerializer
+    # serializer_class = RouteJourneysListSerializer
 
     def get_queryset(self):
         route_id = self.kwargs["route_id"]
@@ -90,7 +91,7 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
 
     def get_object(self):
         queryset = self.get_queryset()
-        journey_id = self.kwargs["pk"]
+        journey_id = self.kwargs["journey_id"]
         try:
             return queryset.get(id=journey_id)
         except Journey.DoesNotExist:
@@ -99,3 +100,8 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         route_id = self.kwargs["route_id"]
         serializer.save(route_id=route_id)
+
+    def get_serializer_class(self):
+        if self.action in ["list", "retrieve"]:
+            return RouteJourneysListSerializer
+        return RouteJourneysSerializer

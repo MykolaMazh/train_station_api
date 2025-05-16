@@ -15,7 +15,9 @@ from train_station.views import (
 app_name = "train_station"
 
 
-route_journeys_list = RouteJourneysViewSet.as_view({"get": "list", "post": "create"})
+route_journeys_list = RouteJourneysViewSet.as_view(
+    {"get": "list", "post": "create"}
+)
 
 route_journey_detail = RouteJourneysViewSet.as_view(
     {
@@ -37,9 +39,13 @@ router.register("routes", RouteViewSet),
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("route_journeys/<int:route_id>/", route_journeys_list, name="route-journeys-list"),
     path(
-        "route_journeys/<int:route_id>/<int:pk>/",
+        "route/<int:route_id>/journeys/",
+        route_journeys_list,
+        name="route-journeys-list",
+    ),
+    path(
+        "route/<int:route_id>/journeys/<int:journey_id>",
         route_journey_detail,
         name="route-journey-detail",
     ),

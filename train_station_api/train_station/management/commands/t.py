@@ -1,11 +1,11 @@
-import datetime, time
+from datetime import timedelta, datetime
 import json
 
 
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 
-from train_station.models import Ticket, Journey, Route
+from train_station.models import Ticket, Journey, Route, JourneyStation, Station
 
 
 class Command(BaseCommand):
@@ -14,86 +14,78 @@ class Command(BaseCommand):
     def handle(self, **kwargs):
         requested_departure_station = "Kyiv"
         requested_arrival_station = "Rivne"
-        requested_departure_time = datetime.datetime.now().time()
-        print(requested_departure_time)
+        requested_departure_time = datetime.now()
 
-        routes = (
-            Route.objects.filter(
-                Q(source__name=requested_departure_station)
-                | Q(
-                    route_intermediate_stations__name__name=requested_departure_station
-                ),
-            )
-            .filter(
-                Q(
-                    route_intermediate_stations__name__name=requested_arrival_station
+        def find_journeys_between_stations(from_station, to_station, date_time):
+            journey_date = date_time.date()
+            time_threshold = date_time.time()
+
+            matching_journeys = []
+
+            journeys = (
+                Journey.objects.filter(
+                    (
+                        Q(route__route_stations__station=from_station)
+                        | Q(route__source=from_station)
+                    )
+                    & (
+                        Q(route__route_stations__station=to_station)
+                        | Q(route__destination=to_station)
+                    )
                 )
-                | Q(destination__name=requested_arrival_station)
+                .distinct()
+                .prefetch_related("journey_stations", "route__route_stations")
             )
-            .distinct()
+            print("journeys before", len(journeys))
+
+            for journey in journeys:
+                if (
+                    journey.no_journey_month_days
+                    and journey_date.day in journey.no_journey_month_days
+                ):
+                    continue
+                if (
+                    journey.no_journey_week_days
+                    and journey_date.weekday() in journey.no_journey_week_days
+                ):
+                    continue
+
+                from_station_number = Station.get_station_number(
+                    from_station, journey.route
+                )
+                to_station_number = Station.get_station_number(
+                    to_station, journey.route
+                )
+
+                # Make sure direction is correct
+                if from_station_number >= to_station_number:
+                    continue
+
+                # Combine with date to make full datetime\
+                if from_station == journey.route.source:
+                    departure_dt = datetime.combine(
+                        journey_date, journey.departure_time
+                    )
+                else:
+                    departure_dt = datetime.combine(
+                        journey_date,
+                        journey.journey_stations.get(
+                            route_station__station=from_station
+                        ).departure_time,
+                    )
+                print(departure_dt, date_time)
+
+                # Accept only journeys that depart after or at the given datetime
+                if departure_dt >= date_time:
+                    matching_journeys.append((journey, departure_dt))
+
+            return matching_journeys
+
+        journeys = find_journeys_between_stations(
+            Station.objects.get(name=requested_departure_station),
+            Station.objects.get(name=requested_arrival_station),
+            requested_departure_time,
         )
-        found_journeys = {}
-
-        def update_found_journeys(journey, departure_time):
-            found_journeys.update({journey: departure_time})
-
-        if routes:
-            straight_routes = routes.filter(
-                source__name=requested_departure_station
-            )
-
-            if straight_routes:
-                for route in straight_routes:
-                    _routes = route.journeys.all()
-                    straight_routes_journeys = _routes.filter(
-                        departure_time__gte=requested_departure_time
-                    )
-                    if straight_routes_journeys:
-                        for journey in straight_routes_journeys:
-                            update_found_journeys(
-                                journey, journey.departure_time
-                            )
-                    else:
-                        for journey in _routes:
-                            update_found_journeys(
-                                journey, journey.departure_time
-                            )
-
-            passing_routes = routes.filter(
-                route_intermediate_stations__name__name=requested_departure_station
-            )
-            if passing_routes:
-                for route in passing_routes:
-                    departure_time_list_str = (
-                        route.route_intermediate_stations.filter(
-                            name__name=requested_departure_station
-                        ).values_list("departure_list")[0][0]
-                    )
-                    departure_time_list = json.loads(departure_time_list_str)
-                    add_all_journeys = True
-                    for index, (hours, seconds) in enumerate(
-                        departure_time_list
-                    ):
-                        departure_time = datetime.time(hours, seconds)
-                        if departure_time >= requested_departure_time:
-                            current_journey = route.journeys.order_by(
-                                "departure_time"
-                            )[index]
-                            update_found_journeys(
-                                current_journey, departure_time
-                            )
-                            add_all_journeys = False
-                    if add_all_journeys:
-                        for index, journey in enumerate(
-                            route.journeys.order_by("departure_time")
-                        ):
-                            update_found_journeys(
-                                journey,
-                                datetime.time(
-                                    departure_time_list[index][0],
-                                    departure_time_list[index][1],
-                                ),
-                            )
-        print(found_journeys.items())
-        for journey, time in found_journeys.items():
-            print(journey, time)
+        print("journeys after", len(journeys))
+        for j, dt in journeys:
+            print(f"{j} departs at {dt.strftime("%Y-%m-%d %H:%M")}")
