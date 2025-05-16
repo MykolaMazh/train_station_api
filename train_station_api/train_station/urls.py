@@ -10,6 +10,7 @@ from train_station.views import (
     TrainTypeViewSet,
     RouteViewSet,
     RouteJourneysViewSet,
+    JourneySearchView,
 )
 
 app_name = "train_station"
@@ -48,5 +49,8 @@ urlpatterns = [
         "route/<int:route_id>/journeys/<int:journey_id>",
         route_journey_detail,
         name="route-journey-detail",
+    ),
+    path(
+        "search-journeys/", JourneySearchView.as_view(), name="search-journeys"
     ),
 ]

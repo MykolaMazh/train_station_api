@@ -185,3 +185,9 @@ class RouteJourneysListSerializer(serializers.ModelSerializer):
 
     def get_crew(self, obj):
         return [str(crew_m) for crew_m in obj.crew.all()]
+
+
+class JourneySearchSerializer(serializers.Serializer):
+    requested_departure_station = serializers.CharField()
+    requested_arrival_station = serializers.CharField()
+    requested_departure_time = serializers.DateTimeField()

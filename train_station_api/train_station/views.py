@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import status, generics, mixins, viewsets
+from rest_framework.views import APIView
 
 from train_station.models import (
     Journey,
@@ -26,7 +27,9 @@ from train_station.serializers import (
     RouteRetrieveSerializer,
     RouteJourneysSerializer,
     RouteJourneysListSerializer,
+    JourneySearchSerializer,
 )
+from train_station.utils import find_journeys_between_stations
 
 
 class CrewMemberViewSet(viewsets.ModelViewSet):
@@ -105,3 +108,46 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
         if self.action in ["list", "retrieve"]:
             return RouteJourneysListSerializer
         return RouteJourneysSerializer
+
+
+class JourneySearchView(APIView):
+    def post(self, request):
+        serializer = JourneySearchSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        requested_departure_station = serializer.validated_data[
+            "requested_departure_station"
+        ]
+        requested_arrival_station = serializer.validated_data[
+            "requested_arrival_station"
+        ]
+        requested_departure_time = serializer.validated_data[
+            "requested_departure_time"
+        ]
+
+        try:
+            from_station = Station.objects.get(
+                name=requested_departure_station
+            )
+            to_station = Station.objects.get(name=requested_arrival_station)
+        except Station.DoesNotExist:
+            return Response(
+                {"detail": "Station not found"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        journeys = find_journeys_between_stations(
+            from_station, to_station, requested_departure_time
+        )
+
+        response_data = [
+            {
+                "journey_id": j.id,
+                "route": str(j.route),
+                "train": str(j.train),
+                "departure_time": dt.strftime("%Y-%m-%d %H:%M"),
+            }
+            for j, dt in journeys
+        ]
+
+        return Response(response_data, status=status.HTTP_200_OK)
