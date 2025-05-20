@@ -9,6 +9,7 @@ from .models import (
     TrainType,
     Route,
     RouteStation,
+    JourneyStation,
 )
 
 
@@ -75,7 +76,6 @@ class RouteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         route_stations_data = validated_data.pop("route_stations")
-        print(route_stations_data)
         route = Route.objects.create(**validated_data)
         for route_station in route_stations_data:
             RouteStation.objects.create(route=route, **route_station)
@@ -151,7 +151,15 @@ class RouteListSerializer(serializers.ModelSerializer):
         return [rs.station.name for rs in route_stations]
 
 
+class JourneyStationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JourneyStation
+        fields = ["route_station", "arrival_time", "departure_time"]
+
+
 class RouteJourneysSerializer(serializers.ModelSerializer):
+    journey_stations = JourneyStationSerializer(many=True)
+
     class Meta:
         model = Journey
         fields = [
@@ -163,7 +171,38 @@ class RouteJourneysSerializer(serializers.ModelSerializer):
             "arrival_time",
             "no_journey_month_days",
             "no_journey_week_days",
+            "journey_stations",
         ]
+
+    def create(self, validated_data):
+        journey_stations_data = validated_data.pop("journey_stations")
+        crew_data = validated_data.pop("crew", None)
+        journey = Journey.objects.create(**validated_data)
+        if crew_data is not None:
+            journey.crew.set(crew_data)
+        for journey_station in journey_stations_data:
+            JourneyStation.objects.create(journey=journey, **journey_station)
+        return journey
+
+    def update(self, instance, validated_data):
+        journey_stations_data = validated_data.pop("journey_stations", None)
+        crew_data = validated_data.pop("crew", None)
+
+        if crew_data is not None:
+            instance.crew.set(crew_data)
+
+        # Update the Route fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if journey_stations_data is not None:
+            # Clear and recreate route stations
+            instance.journey_stations.all().delete()
+            for station_data in journey_stations_data:
+                JourneyStation.objects.create(journey=instance, **station_data)
+
+        return instance
 
 
 class RouteJourneysListSerializer(serializers.ModelSerializer):
