@@ -90,7 +90,13 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         route_id = self.kwargs["route_id"]
-        return Journey.objects.filter(route__id=route_id)
+        return (
+            Journey.objects.filter(route__id=route_id)
+            .select_related("train")
+            .prefetch_related(
+                "crew", "journey_stations__route_station__station"
+            )
+        )
 
     def get_object(self):
         queryset = self.get_queryset()

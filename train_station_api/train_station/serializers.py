@@ -169,6 +169,7 @@ class RouteJourneysSerializer(serializers.ModelSerializer):
 class RouteJourneysListSerializer(serializers.ModelSerializer):
     train = serializers.StringRelatedField()
     crew = serializers.SerializerMethodField()
+    journey_stations = serializers.SerializerMethodField()
 
     class Meta:
         model = Journey
@@ -181,10 +182,17 @@ class RouteJourneysListSerializer(serializers.ModelSerializer):
             "arrival_time",
             "no_journey_month_days",
             "no_journey_week_days",
+            "journey_stations",
         ]
 
     def get_crew(self, obj):
         return [str(crew_m) for crew_m in obj.crew.all()]
+
+    def get_journey_stations(self, obj):
+        return [
+            str(station.route_station.station)
+            for station in obj.journey_stations.all()
+        ]
 
 
 class JourneySearchSerializer(serializers.Serializer):
