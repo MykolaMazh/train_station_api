@@ -219,13 +219,23 @@ class Station(models.Model):
 
     @staticmethod
     def get_station_number(station: "Station", route: Route):
-        if station not in (route.source, route.destination):
-            return route.route_stations.get(
-                station=station
-            ).route_ordinal_station_number
-        elif station == route.source:
+        if station == route.source:
             return 0
-        return 1000
+        if station == route.destination:
+            return 1000
+
+        route_station = next(
+            (
+                _route_station
+                for _route_station in route.route_stations.all()
+                if _route_station.station_id == station.id
+            ),
+            None,
+        )
+        if route_station is None:
+            raise ValueError(f"Station {station} not in route {route}")
+
+        return route_station.route_ordinal_station_number
 
     def __str__(self):
         return self.name
