@@ -10,6 +10,7 @@ from .models import (
     Route,
     RouteStation,
     JourneyStation,
+    Ticket,
 )
 
 
@@ -238,3 +239,18 @@ class JourneySearchSerializer(serializers.Serializer):
     requested_departure_station = serializers.CharField()
     requested_arrival_station = serializers.CharField()
     requested_departure_time = serializers.DateTimeField()
+
+
+class TicketSerializer(serializers.Serializer):
+    class Meta:
+        model = Ticket
+        fields = [
+            "id",
+            "departure_station",
+            "arrival_station",
+            "journey_date",
+            "car",
+            "seat",
+            "journey",
+            "created_at",
+        ]
