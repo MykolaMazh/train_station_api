@@ -77,7 +77,7 @@ class Ticket(models.Model):
     journey = models.ForeignKey(
         Journey, on_delete=models.DO_NOTHING, related_name="tickets"
     )
-    order = models.ForeignKey("Order", on_delete=models.CASCADE)
+    order = models.ForeignKey("Order", on_delete=models.CASCADE, related_name="tickets")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

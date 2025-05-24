@@ -11,6 +11,7 @@ from .models import (
     RouteStation,
     JourneyStation,
     Ticket,
+    Order,
 )
 
 
@@ -254,3 +255,9 @@ class TicketSerializer(serializers.Serializer):
             "journey",
             "created_at",
         ]
+
+
+class OrderSerializer(serializers.Serializer):
+    class Meta:
+        model = Order
+        fields = ["id", "user", "tickets", "created_at"]
