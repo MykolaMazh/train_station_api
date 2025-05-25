@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers, generics
 from rest_framework.relations import PrimaryKeyRelatedField
 
@@ -242,7 +243,7 @@ class JourneySearchSerializer(serializers.Serializer):
     requested_departure_time = serializers.DateTimeField()
 
 
-class TicketSerializer(serializers.Serializer):
+class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = [
@@ -257,7 +258,17 @@ class TicketSerializer(serializers.Serializer):
         ]
 
 
-class OrderSerializer(serializers.Serializer):
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True)
+
     class Meta:
         model = Order
         fields = ["id", "user", "tickets", "created_at"]
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            tickets_data = validated_data.pop("tickets")
+            order = Order.objects.create(**validated_data)
+            for ticket_data in tickets_data:
+                Ticket.objects.create(order=order, **ticket_data)
+            return order

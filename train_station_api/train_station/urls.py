@@ -11,6 +11,7 @@ from train_station.views import (
     RouteViewSet,
     RouteJourneysViewSet,
     JourneySearchView,
+    OrderViewSet,
 )
 
 app_name = "train_station"
@@ -36,6 +37,7 @@ router.register("stations", StationViewSet)
 router.register("trains", TrainViewSet)
 router.register("train-types", TrainTypeViewSet)
 router.register("routes", RouteViewSet),
+router.register("orders", OrderViewSet, basename="orders"),
 
 
 urlpatterns = [

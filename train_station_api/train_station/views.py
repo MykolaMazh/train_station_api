@@ -14,6 +14,7 @@ from train_station.models import (
     Train,
     TrainType,
     Route,
+    Order,
 )
 from train_station.serializers import (
     JourneySerializer,
@@ -28,6 +29,7 @@ from train_station.serializers import (
     RouteJourneysSerializer,
     RouteJourneysListSerializer,
     JourneySearchSerializer,
+    OrderSerializer,
 )
 from train_station.utils import find_journeys_between_stations
 
@@ -157,3 +159,13 @@ class JourneySearchView(APIView):
         ]
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
