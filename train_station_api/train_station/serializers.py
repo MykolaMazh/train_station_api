@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers, generics
-from rest_framework.relations import PrimaryKeyRelatedField
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from .models import (
     Journey,
@@ -244,6 +245,7 @@ class JourneySearchSerializer(serializers.Serializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Ticket
         fields = [
@@ -254,7 +256,6 @@ class TicketSerializer(serializers.ModelSerializer):
             "car",
             "seat",
             "journey",
-            "created_at",
         ]
 
 
@@ -264,11 +265,17 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ["id", "user", "tickets", "created_at"]
+        read_only_fields = ["user", "created_at"]
 
     def create(self, validated_data):
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
+                ticket = Ticket(order=order, **ticket_data)
+                try:
+                    ticket.full_clean()  # Call model-level validation
+                except DjangoValidationError as e:
+                    raise DRFValidationError(e.messages)
+                ticket.save()
             return order

@@ -83,13 +83,10 @@ class Ticket(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        self_related = Ticket.objects.filter(id=self.id).select_related(
-            "departure_station", "arrival_station", "journey"
-        )[0]
         return (
-            f"{self_related.departure_station} - {self_related.arrival_station}"
+            f"{self.departure_station} - {self.arrival_station}"
             f" /// car:{self.car} seat:{self.seat}"
-            f" /// {self_related.journey}"
+            f" /// {self.journey}"
         )
 
     @property
@@ -134,11 +131,9 @@ class Ticket(models.Model):
         )
 
     def clean(self):
-        # Validate if the ticket's journey date is not in the no_journey_month_days or no_journey_week_days
         journey_day = self.journey_date.day
-        journey_weekday = self.journey_date.weekday()  # 0 = Monday, 6 = Sunday
+        journey_weekday = self.journey_date.weekday()
 
-        # 1. Check if the journey date's day of the month is in no_journey_month_days
         if (
             self.journey.no_journey_month_days
             and journey_day in self.journey.no_journey_month_days
@@ -147,7 +142,6 @@ class Ticket(models.Model):
                 f"Journey does not operate on day {journey_day} of the month."
             )
 
-        # 2. Check if the journey date's weekday is in no_journey_week_days
         if (
             self.journey.no_journey_week_days
             and journey_weekday in self.journey.no_journey_week_days
@@ -155,8 +149,6 @@ class Ticket(models.Model):
             raise ValidationError(
                 f"Journey does not operate on weekday {journey_weekday}."
             )
-
-        # Proceed with the rest of the validation (station order and seat availability)
 
         requested_departure_station_number = Station.get_station_number(
             self.departure_station, self.journey.route

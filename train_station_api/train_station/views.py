@@ -165,7 +165,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
+        return Order.objects.filter(user=self.request.user).prefetch_related(
+            "tickets",
+            "tickets__departure_station",
+            "tickets__arrival_station",
+            "tickets__journey",
+            "tickets__journey__route",
+            "tickets__journey__route__route_stations",
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
