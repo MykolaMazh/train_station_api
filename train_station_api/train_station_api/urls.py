@@ -22,7 +22,11 @@ from debug_toolbar.toolbar import debug_toolbar_urls
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api-auth", include("rest_framework.urls")),
-    path("api/v1/train_station/", include("train_station.urls", namespace="train_station"))
+    path(
+        "api/v1/train_station/",
+        include("train_station.urls", namespace="train_station"),
+    ),
+    path("api/v1/user/", include("user.urls", namespace="user")),
 ]
 
 urlpatterns += debug_toolbar_urls()
