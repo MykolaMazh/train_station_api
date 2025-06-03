@@ -1,11 +1,11 @@
 import datetime
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Q
+from django.conf import settings
 
 
 class Journey(models.Model):
@@ -196,7 +196,9 @@ class Ticket(models.Model):
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+    )
 
     def __str__(self):
         return f"{self.id} - {self.created_at}"
@@ -210,6 +212,9 @@ class Station(models.Model):
     latitude = models.FloatField(
         validators=[MaxValueValidator(180), MinValueValidator(-180)]
     )
+
+    class Meta:
+        ordering = ["name"]
 
     @staticmethod
     def get_station_number(station: "Station", route: Route):

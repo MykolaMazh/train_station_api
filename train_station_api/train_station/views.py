@@ -43,7 +43,7 @@ class CrewMemberViewSet(viewsets.ModelViewSet):
 class StationViewSet(viewsets.ModelViewSet):
     queryset = Station.objects.all()
     serializer_class = StationSerializer
-    permission_classes = (IsAdminUser,)
+    # permission_classes = (IsAdminUser,)
 
 
 class TrainViewSet(viewsets.ModelViewSet):
