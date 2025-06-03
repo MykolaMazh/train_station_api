@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "train_station.apps.TrainStationConfig",
     "user.apps.UserConfig",
     "rest_framework",
+    "rest_framework.authtoken",
 ]
 
 MIDDLEWARE = [
