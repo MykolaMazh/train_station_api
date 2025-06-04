@@ -1,10 +1,7 @@
-from rest_framework.decorators import api_view
 from rest_framework.exceptions import NotFound
-from rest_framework.generics import GenericAPIView
-from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework import status, generics, mixins, viewsets
+from rest_framework import status, viewsets
 from rest_framework.views import APIView
 
 from train_station.models import (
@@ -16,6 +13,7 @@ from train_station.models import (
     Route,
     Order,
 )
+from train_station.permissions import IsAdminOrReadOnly
 from train_station.serializers import (
     JourneySerializer,
     CrewMemberSerializer,
@@ -37,18 +35,18 @@ from train_station.utils import find_journeys_between_stations
 class CrewMemberViewSet(viewsets.ModelViewSet):
     queryset = CrewMember.objects.all()
     serializer_class = CrewMemberSerializer
-    # permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminUser,)
 
 
 class StationViewSet(viewsets.ModelViewSet):
     queryset = Station.objects.all()
     serializer_class = StationSerializer
-    # permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminUser,)
 
 
 class TrainViewSet(viewsets.ModelViewSet):
     queryset = Train.objects.select_related("_type")
-    # permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminUser,)
 
     def get_serializer_class(self):
         if self.action in ("create", "update", "partial_update"):
@@ -65,7 +63,7 @@ class TrainTypeViewSet(viewsets.ModelViewSet):
 class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
-    # permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrReadOnly,)
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -85,10 +83,11 @@ class RouteViewSet(viewsets.ModelViewSet):
 class JourneyViewSet(viewsets.ModelViewSet):
     queryset = Journey.objects.all()
     serializer_class = JourneySerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class RouteJourneysViewSet(viewsets.ModelViewSet):
-    # serializer_class = RouteJourneysListSerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
     def get_queryset(self):
         route_id = self.kwargs["route_id"]
@@ -163,6 +162,7 @@ class JourneySearchView(APIView):
 
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user).prefetch_related(

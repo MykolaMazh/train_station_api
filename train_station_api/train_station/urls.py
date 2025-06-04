@@ -31,12 +31,12 @@ route_journey_detail = RouteJourneysViewSet.as_view(
 )
 
 router = routers.DefaultRouter()
-router.register("journeys", JourneyViewSet)
-router.register("crews", CrewMemberViewSet)
 router.register("stations", StationViewSet)
-router.register("trains", TrainViewSet)
 router.register("train-types", TrainTypeViewSet)
+router.register("trains", TrainViewSet)
+router.register("crews", CrewMemberViewSet)
 router.register("routes", RouteViewSet),
+router.register("journeys", JourneyViewSet)
 router.register("orders", OrderViewSet, basename="orders"),
 
 

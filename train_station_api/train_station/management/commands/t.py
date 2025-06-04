@@ -5,7 +5,13 @@ import json
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 
-from train_station.models import Ticket, Journey, Route, JourneyStation, Station
+from train_station.models import (
+    Ticket,
+    Journey,
+    Route,
+    JourneyStation,
+    Station,
+)
 
 
 class Command(BaseCommand):
@@ -13,10 +19,12 @@ class Command(BaseCommand):
 
     def handle(self, **kwargs):
         requested_departure_station = "Kyiv"
-        requested_arrival_station = "Rivne"
+        requested_arrival_station = "Ternopil"
         requested_departure_time = datetime.now()
 
-        def find_journeys_between_stations(from_station, to_station, date_time):
+        def find_journeys_between_stations(
+            from_station, to_station, date_time
+        ):
             journey_date = date_time.date()
             time_threshold = date_time.time()
 
