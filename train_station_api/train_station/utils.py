@@ -48,6 +48,7 @@ def find_journeys_between_stations(from_station, to_station, date_time):
         .prefetch_related(
             "journey_stations__route_station__station",
             "journey_stations__route_station",
+            "route__route_stations",
         )
         .distinct()
     )
