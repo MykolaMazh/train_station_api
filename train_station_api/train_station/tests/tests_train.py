@@ -139,3 +139,104 @@ class OrderTest(TestCase):
 
         self.assertEqual(CrewMember.objects.count(), 6)
 
+    def test_search_journeys(self):
+
+        self.user_make_admin()
+        self.list_post_request(self.station_url, self.stations)
+        self.list_post_request(self.train_type_url, self.train_types)
+        self.list_post_request(self.train_url, self.train_data)
+        self.list_post_request(self.crew_url, self.crew_squad)
+
+        routes = {
+            "source": 1,
+            "destination": 5,
+            "distance": 550,
+            "route_stations": [
+                {
+                    "station": 2,
+                    "route_ordinal_station_number": 1,
+                    "route_distance_already_passed_km": 150,
+                },
+                {
+                    "station": 3,
+                    "route_ordinal_station_number": 2,
+                    "route_distance_already_passed_km": 280,
+                },
+                {
+                    "station": 4,
+                    "route_ordinal_station_number": 3,
+                    "route_distance_already_passed_km": 480,
+                },
+            ],
+        }
+
+        route_url = reverse("train_station:route-list")
+        self.client.post(route_url, routes, "json")
+        self.assertEqual(Route.objects.count(), 1)
+
+        route_journeys_url = reverse(
+            "train_station:route-journeys-list", kwargs={"route_id": 1}
+        )
+        route_journeys = [
+            {
+                "route_journey_number": 1,
+                "train": 2,
+                "crew": [1, 2],
+                "departure_time": "07:00",
+                "arrival_time": "12:30",
+                "no_journey_month_days": [],
+                "no_journey_week_days": [],
+                "journey_stations": [
+                    {
+                        "route_station": 1,
+                        "arrival_time": "08:30",
+                        "departure_time": "08:32",
+                    }
+                ],
+            },
+            {
+                "route_journey_number": 2,
+                "train": 1,
+                "crew": [3, 4],
+                "departure_time": "09:00",
+                "arrival_time": "16:00",
+                "no_journey_month_days": [3],
+                "no_journey_week_days": [],
+                "journey_stations": [
+                    {
+                        "route_station": 1,
+                        "arrival_time": "10:45",
+                        "departure_time": "10:47",
+                    },
+                    {
+                        "route_station": 2,
+                        "arrival_time": "12:30",
+                        "departure_time": "12:35",
+                    },
+                    {
+                        "route_station": 3,
+                        "arrival_time": "14:30",
+                        "departure_time": "14:35",
+                    },
+                ],
+            },
+        ]
+
+        self.list_post_request(route_journeys_url, route_journeys)
+        self.assertEqual(Route.objects.get(id=1).journeys.count(), 2)
+
+        search_journey_data = {
+            "requested_departure_station": "S2",
+            "requested_arrival_station": "S4",
+            "requested_departure_time": "2025-06-08T1:30",
+        }
+
+        search_url = reverse("train_station:search-journeys")
+        self.user.is_staff = False
+        self.user.save()
+        self.client.force_authenticate(self.user)
+        response = self.client.post(search_url, search_journey_data, "json")
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(
+            response.data[0]["departure_time"], "2025-06-08 10:47"
+        )
