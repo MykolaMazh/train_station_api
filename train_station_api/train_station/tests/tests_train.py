@@ -78,6 +78,12 @@ class OrderTest(TestCase):
                 "places_in_car": 26,
                 "type": 2,
             },
+            {
+                "name": "Train3",
+                "car_num": 9,
+                "places_in_car": 25,
+                "type": 2,
+            },
         ]
         self.crew_url = reverse("train_station:crew_member-list")
 
@@ -90,64 +96,7 @@ class OrderTest(TestCase):
             {"first_name": "Liam", "last_name": "Delap"},
         ]
 
-    def user_make_admin(self):
-        self.user.is_staff = True
-        self.user.save()
-        self.client.force_authenticate(self.user)
-
-    def list_post_request(self, url, data: list[dict]):
-        for _ in data:
-            self.client.post(url, _, "json")
-
-    def test_only_admin_can_create_stations(self):
-
-        response = self.client.post(self.station_url, self.stations[0], "json")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.user_make_admin()
-        self.list_post_request(self.station_url, self.stations)
-
-        self.assertEqual(Station.objects.count(), 11)
-
-    def test_only_admin_can_create_train_and_types(self):
-        train_type_response = self.client.post(
-            self.train_type_url, self.train_types[0], "json"
-        )
-        train_response = self.client.post(
-            self.train_url, self.train_data[0], "json"
-        )
-        self.assertEqual(
-            train_type_response.status_code, status.HTTP_403_FORBIDDEN
-        )
-        self.assertEqual(train_response.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.user_make_admin()
-        self.list_post_request(self.train_type_url, self.train_types)
-        self.list_post_request(self.train_url, self.train_data)
-
-        self.assertEqual(TrainType.objects.count(), 3)
-        self.assertEqual(Train.objects.count(), 2)
-
-    def test_only_admin_can_create_crew(self):
-        crew_response = self.client.post(
-            self.crew_url, self.crew_squad[0], "json"
-        )
-        self.assertEqual(crew_response.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.user_make_admin()
-        self.list_post_request(self.crew_url, self.crew_squad)
-
-        self.assertEqual(CrewMember.objects.count(), 6)
-
-    def test_search_journeys(self):
-
-        self.user_make_admin()
-        self.list_post_request(self.station_url, self.stations)
-        self.list_post_request(self.train_type_url, self.train_types)
-        self.list_post_request(self.train_url, self.train_data)
-        self.list_post_request(self.crew_url, self.crew_squad)
-
-        routes = {
+        self.route1_5 = {
             "source": 1,
             "destination": 5,
             "distance": 550,
@@ -170,14 +119,7 @@ class OrderTest(TestCase):
             ],
         }
 
-        route_url = reverse("train_station:route-list")
-        self.client.post(route_url, routes, "json")
-        self.assertEqual(Route.objects.count(), 1)
-
-        route_journeys_url = reverse(
-            "train_station:route-journeys-list", kwargs={"route_id": 1}
-        )
-        route_journeys = [
+        self.route1_5_journeys = [
             {
                 "route_journey_number": 1,
                 "train": 2,
@@ -222,8 +164,132 @@ class OrderTest(TestCase):
             },
         ]
 
-        self.list_post_request(route_journeys_url, route_journeys)
+        self.route2_7 = {
+            "source": 2,
+            "destination": 7,
+            "distance": 650,
+            "route_stations": [
+                {
+                    "station": 4,
+                    "route_ordinal_station_number": 1,
+                    "route_distance_already_passed_km": 250,
+                },
+                {
+                    "station": 5,
+                    "route_ordinal_station_number": 2,
+                    "route_distance_already_passed_km": 380,
+                },
+                {
+                    "station": 6,
+                    "route_ordinal_station_number": 3,
+                    "route_distance_already_passed_km": 450,
+                },
+            ],
+        }
+
+        self.route2_7_journeys = [
+            {
+                "route_journey_number": 1,
+                "train": 3,
+                "crew": [4, 5],
+                "departure_time": "22:00",
+                "arrival_time": "12:30",
+                "no_journey_month_days": [],
+                "no_journey_week_days": [],
+                "journey_stations": [
+                    {
+                        "route_station": 1,
+                        "arrival_time": "23:12",
+                        "departure_time": "23:32",
+                    },
+                    {
+                        "route_station": 2,
+                        "arrival_time": "02:30",
+                        "departure_time": "02:35",
+                    },
+                    {
+                        "route_station": 3,
+                        "arrival_time": "10:30",
+                        "departure_time": "10:39",
+                    },
+                ],
+            },
+        ]
+
+        self.route_url = reverse("train_station:route-list")
+
+    def user_make_admin(self):
+        self.user.is_staff = True
+        self.user.save()
+        self.client.force_authenticate(self.user)
+
+    def list_post_request(self, url, data: list[dict]):
+        for _ in data:
+            self.client.post(url, _, "json")
+
+    def test_only_admin_can_create_stations(self):
+
+        response = self.client.post(self.station_url, self.stations[0], "json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.user_make_admin()
+        self.list_post_request(self.station_url, self.stations)
+
+        self.assertEqual(Station.objects.count(), 11)
+
+    def test_only_admin_can_create_train_and_types(self):
+        train_type_response = self.client.post(
+            self.train_type_url, self.train_types[0], "json"
+        )
+        train_response = self.client.post(
+            self.train_url, self.train_data[0], "json"
+        )
+        self.assertEqual(
+            train_type_response.status_code, status.HTTP_403_FORBIDDEN
+        )
+        self.assertEqual(train_response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.user_make_admin()
+        self.list_post_request(self.train_type_url, self.train_types)
+        self.list_post_request(self.train_url, self.train_data)
+
+        self.assertEqual(TrainType.objects.count(), 3)
+        self.assertEqual(Train.objects.count(), 3)
+
+    def test_only_admin_can_create_crew(self):
+        crew_response = self.client.post(
+            self.crew_url, self.crew_squad[0], "json"
+        )
+        self.assertEqual(crew_response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.user_make_admin()
+        self.list_post_request(self.crew_url, self.crew_squad)
+
+        self.assertEqual(CrewMember.objects.count(), 6)
+
+    def test_search_journeys(self):
+
+        self.user_make_admin()
+        self.list_post_request(self.station_url, self.stations)
+        self.list_post_request(self.train_type_url, self.train_types)
+        self.list_post_request(self.train_url, self.train_data)
+        self.list_post_request(self.crew_url, self.crew_squad)
+
+        for route_data in [self.route1_5, self.route2_7]:
+            self.client.post(self.route_url, route_data, "json")
+        self.assertEqual(Route.objects.count(), 2)
+
+        route1_5_journeys_url = reverse(
+            "train_station:route-journeys-list", kwargs={"route_id": 1}
+        )
+        route2_7_journeys_url = reverse(
+            "train_station:route-journeys-list", kwargs={"route_id": 2}
+        )
+
+        self.list_post_request(route1_5_journeys_url, self.route1_5_journeys)
+        self.list_post_request(route2_7_journeys_url, self.route2_7_journeys)
         self.assertEqual(Route.objects.get(id=1).journeys.count(), 2)
+        self.assertEqual(Route.objects.get(id=2).journeys.count(), 1)
 
         search_journey_data = {
             "requested_departure_station": "S2",
@@ -236,7 +302,11 @@ class OrderTest(TestCase):
         self.user.save()
         self.client.force_authenticate(self.user)
         response = self.client.post(search_url, search_journey_data, "json")
-        self.assertEqual(len(response.data), 1)
+        print(response.data)
+        self.assertEqual(len(response.data), 2)
         self.assertEqual(
             response.data[0]["departure_time"], "2025-06-08 10:47"
+        )
+        self.assertEqual(
+            response.data[1]["departure_time"], "2025-06-08 22:00"
         )

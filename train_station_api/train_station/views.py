@@ -157,7 +157,11 @@ class JourneySearchView(APIView):
             for j, dt in journeys
         ]
 
-        return Response(response_data, status=status.HTTP_200_OK)
+        response_data_sorted = sorted(
+            response_data, key=lambda x: x["departure_time"]
+        )
+
+        return Response(response_data_sorted, status=status.HTTP_200_OK)
 
 
 class OrderViewSet(viewsets.ModelViewSet):

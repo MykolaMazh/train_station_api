@@ -98,4 +98,4 @@ def find_journeys_between_stations(from_station, to_station, date_time):
     add_journeys(journeys1)
     add_journeys(journeys2)
 
-    return matching_journeys
+    return set(matching_journeys)
