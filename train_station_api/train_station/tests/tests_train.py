@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
@@ -15,6 +16,7 @@ from train_station.models import (
     Train,
     Route,
     Journey,
+    Ticket,
 )
 from train_station.serializers import JourneySearchSerializer
 
@@ -302,7 +304,6 @@ class OrderTest(TestCase):
         self.user.save()
         self.client.force_authenticate(self.user)
         response = self.client.post(search_url, search_journey_data, "json")
-        print(response.data)
         self.assertEqual(len(response.data), 2)
         self.assertEqual(
             response.data[0]["departure_time"], "2025-06-08 10:47"
@@ -310,3 +311,61 @@ class OrderTest(TestCase):
         self.assertEqual(
             response.data[1]["departure_time"], "2025-06-08 22:00"
         )
+
+    def test_no_same_seat_occupy(self):
+
+        self.user_make_admin()
+        self.list_post_request(self.station_url, self.stations)
+        self.list_post_request(self.train_type_url, self.train_types)
+        self.list_post_request(self.train_url, self.train_data)
+        self.list_post_request(self.crew_url, self.crew_squad)
+
+        self.client.post(self.route_url, self.route1_5, "json")
+
+        route1_5_journeys_url = reverse(
+            "train_station:route-journeys-list", kwargs={"route_id": 1}
+        )
+        self.list_post_request(route1_5_journeys_url, self.route1_5_journeys)
+
+        self.user.is_staff = False
+        self.user.save()
+        self.client.force_authenticate(self.user)
+
+        order_url = reverse("train_station:orders-list")
+
+        ticket1_data = {
+            "tickets": [
+                {
+                    "departure_station": 1,
+                    "arrival_station": 2,
+                    "journey_date": "2025-06-12",
+                    "car": 2,
+                    "seat": 1,
+                    "journey": 2,
+                }
+            ]
+        }
+
+        ticket2_data = copy.deepcopy(ticket1_data)
+        ticket2_data["tickets"][0]["arrival_station"] = 3
+
+        ticket3_data = copy.deepcopy(ticket1_data)
+        ticket3_data["tickets"][0]["arrival_station"] = 5
+
+        ticket4_data = copy.deepcopy(ticket1_data)
+        ticket4_data["tickets"][0]["departure_station"] = 2
+        ticket4_data["tickets"][0]["arrival_station"] = 4
+
+        ticket5_data = copy.deepcopy(ticket1_data)
+        ticket5_data["tickets"][0]["journey_date"] = "2025-06-13"
+
+        self.client.post(order_url, ticket1_data, "json")
+
+        for ticket_data in [ticket2_data, ticket3_data]:
+            response = self.client.post(order_url, ticket_data, "json")
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("The seat is not available", str(response.data))
+
+        response = self.client.post(order_url, ticket5_data, "json")
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Ticket.objects.count(), 2)
