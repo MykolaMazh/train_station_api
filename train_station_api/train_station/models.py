@@ -10,9 +10,6 @@ class Journey(models.Model):
     route = models.ForeignKey(
         "Route", related_name="journeys", on_delete=models.CASCADE
     )
-    route_journey_number = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1)]
-    )
     train = models.ForeignKey(
         "Train", related_name="journeys", on_delete=models.SET_NULL, null=True
     )
@@ -34,7 +31,7 @@ class Journey(models.Model):
         return f"{self.route} /{self.departure_time.strftime('%H:%M')}/"
 
     class Meta:
-        ordering = ["route_journey_number"]
+        ordering = ["departure_time"]
 
 
 class CrewMember(models.Model):

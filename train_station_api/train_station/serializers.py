@@ -168,7 +168,6 @@ class RouteJourneysSerializer(serializers.ModelSerializer):
         model = Journey
         fields = [
             "id",
-            "route_journey_number",
             "train",
             "crew",
             "departure_time",
@@ -218,7 +217,6 @@ class RouteJourneysListSerializer(serializers.ModelSerializer):
         model = Journey
         fields = [
             "id",
-            "route_journey_number",
             "train",
             "crew",
             "departure_time",
