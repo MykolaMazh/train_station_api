@@ -1,3 +1,9 @@
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiParameter,
+    OpenApiResponse,
+    OpenApiExample,
+)
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -107,14 +113,256 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
         except Journey.DoesNotExist:
             raise NotFound("Journey not found for this route.")
 
-    def perform_create(self, serializer):
-        route_id = self.kwargs["route_id"]
-        serializer.save(route_id=route_id)
-
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
             return RouteJourneysListSerializer
         return RouteJourneysSerializer
+
+    @extend_schema(
+        summary="Get all journey of the route",
+        responses={
+            200: OpenApiResponse(
+                response=RouteJourneysListSerializer(many=True),
+                description="A list of journeys for the given route",
+                examples=[
+                    OpenApiExample(
+                        name="Example list of route journeys",
+                        value=(
+                            {
+                                "id": 2,
+                                "train": "TLK2135 - capacity:35",
+                                "crew": ["Teo Hernandes", "Jonatan Taa"],
+                                "departure_time": "09:00",
+                                "arrival_time": "16:00",
+                                "no_journey_month_days": [3],
+                                "no_journey_week_days": [3],
+                                "journey_stations": [
+                                    "Korosten",
+                                    "Shepetivka",
+                                    "Ternopil",
+                                ],
+                            },
+                            {
+                                "id": 3,
+                                "train": "TLK2031 - capacity:31",
+                                "crew": ["Jadon Sanho", "Liam Delap"],
+                                "departure_time": "22:00",
+                                "arrival_time": "05:00",
+                                "no_journey_month_days": [7],
+                                "no_journey_week_days": [],
+                                "journey_stations": ["Shepetivka", "Ternopil"],
+                            },
+                        ),
+                        description="An example journey response",
+                    )
+                ],
+            )
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        """
+        Retrieve a list of journeys for the given route.
+        Returns a list of journeys with their associated train, crew, departure time, etc.
+        """
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Create a new Journey",
+        description="This endpoint allows you to create a new journey with its associated route, train, crew, and schedule details.",
+        request=RouteJourneysSerializer(),  # Specify the serializer for the request body
+        examples=[
+            OpenApiExample(
+                "Successful Journey Creation Request",
+                summary="Example request for creating a journey.",
+                description="Journey is been created with route_id=route_id",
+                value={
+                    "train": 3,
+                    "crew": [1, 2],
+                    "departure_time": "07:00",
+                    "arrival_time": "12:30",
+                    "no_journey_month_days": [2],
+                    "no_journey_week_days": [0, 3],
+                    "journey_stations": [
+                        {
+                            "route_station": 1,
+                            "arrival_time": "08:30",
+                            "departure_time": "08:32",
+                        }
+                    ],
+                },
+                request_only=True,  # This example is only for the request body
+            )
+        ],
+        responses={
+            201: OpenApiResponse(
+                response=RouteJourneysListSerializer(),
+                description="Created journey for the given route",
+                examples=[
+                    OpenApiExample(
+                        name="Example list of route journeys",
+                        value={
+                            "id": 11,
+                            "train": 3,
+                            "crew": [1, 2],
+                            "departure_time": "07:00",
+                            "arrival_time": "12:30",
+                            "no_journey_month_days": [2],
+                            "no_journey_week_days": [0, 3],
+                            "journey_stations": [
+                                {
+                                    "route_station": 1,
+                                    "arrival_time": "08:30",
+                                    "departure_time": "08:32",
+                                }
+                            ],
+                        },
+                        description="An example journey response",
+                    )
+                ],
+            )
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        # If you have custom logic *before* calling the serializer save, put it here.
+        # Otherwise, just calling super().create() is usually enough.
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        route_id = self.kwargs["route_id"]
+        serializer.save(route_id=route_id)
+
+    @extend_schema(
+        summary="Get the journey of the route",
+        responses={
+            200: OpenApiResponse(
+                response=RouteJourneysListSerializer(),
+                description="A journeys with journey_id of the given route",
+            )
+        },
+    )
+    def retrieve(self, request, *args, **kwargs):
+        "A journeys with journey_id of the given route"
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Update the journey of the route",
+        description="This endpoint allows you to Update the journey of the route",
+        request=RouteJourneysSerializer(),  # Specify the serializer for the request body
+        examples=[
+            OpenApiExample(
+                "Successful Journey updation Request",
+                summary="Example request for updating the journey.",
+                description="Journey with route_id and journey_id is been updated",
+                value={
+                    "train": 3,
+                    "crew": [1, 2],
+                    "departure_time": "07:00",
+                    "arrival_time": "12:30",
+                    "no_journey_month_days": [2],
+                    "no_journey_week_days": [0, 3],
+                    "journey_stations": [
+                        {
+                            "route_station": 1,
+                            "arrival_time": "08:30",
+                            "departure_time": "08:42",
+                        }
+                    ],
+                },
+                request_only=True,  # This example is only for the request body
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=RouteJourneysListSerializer(),
+                description="Updated journey for the given route",
+                examples=[
+                    OpenApiExample(
+                        name="Example journey updated",
+                        value={
+                            "id": 9,
+                            "train": 3,
+                            "crew": [1, 2],
+                            "departure_time": "07:00",
+                            "arrival_time": "12:30",
+                            "no_journey_month_days": [2],
+                            "no_journey_week_days": [0, 3],
+                            "journey_stations": [
+                                {
+                                    "route_station": 1,
+                                    "arrival_time": "08:30",
+                                    "departure_time": "08:42",
+                                }
+                            ],
+                        },
+                        description="An example journey updatedresponse",
+                    )
+                ],
+            )
+        },
+    )
+    def update(self, request, *args, **kwargs):
+        # If you have custom logic *before* calling the serializer save, put it here.
+        # Otherwise, just calling super().create() is usually enough.
+        return super().update(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Partially Update the journey of the route",
+        description="This endpoint allows you to update some fields of the journey of the route",
+        request=RouteJourneysSerializer(),  # Specify the serializer for the request body
+        examples=[
+            OpenApiExample(
+                "Successful Journey updation Request",
+                summary="Example request for updating the journey.",
+                description="Journey with route_id and journey_id is been updated",
+                value={
+                    "train": 4,
+                    "crew": [1, 3],
+                },
+                request_only=True,  # This example is only for the request body
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=RouteJourneysListSerializer(),
+                description="Updated journey for the given route",
+                examples=[
+                    OpenApiExample(
+                        name="Example journey updated",
+                        value={
+                            "id": 9,
+                            "train": 4,
+                            "crew": [1, 3],
+                            "departure_time": "07:00",
+                            "arrival_time": "12:30",
+                            "no_journey_month_days": [2],
+                            "no_journey_week_days": [0, 3],
+                            "journey_stations": [
+                                {
+                                    "route_station": 1,
+                                    "arrival_time": "08:30",
+                                    "departure_time": "08:42",
+                                }
+                            ],
+                        },
+                        description="An example journey updatedresponse",
+                    )
+                ],
+            )
+        },
+    )
+    def partial_update(self, request, *args, **kwargs):
+        # If you have custom logic *before* calling the serializer save, put it here.
+        # Otherwise, just calling super().create() is usually enough.
+        return super().partial_update(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Delete the journey of the route",
+        description="This endpoint allows you to delete journey witgh journey_id of the route with route_id",
+    )
+    def destroy(self, request, *args, **kwargs):
+        # If you have custom logic *before* calling the serializer save, put it here.
+        # Otherwise, just calling super().create() is usually enough.
+        return super().destroy(request, *args, **kwargs)
 
 
 class JourneySearchView(APIView):
