@@ -1,5 +1,5 @@
 from django.db import transaction
-from rest_framework import serializers, generics
+from rest_framework import serializers
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
@@ -231,7 +231,7 @@ class RouteJourneysListSerializer(serializers.ModelSerializer):
 
     def get_journey_stations(self, obj):
         return [
-            str(station.route_station.station)
+            f"{str(station.route_station.station)} {station.arrival_time.strftime("%H:%M")}-{station.departure_time.strftime("%H:%M")}"
             for station in obj.journey_stations.all()
         ]
 

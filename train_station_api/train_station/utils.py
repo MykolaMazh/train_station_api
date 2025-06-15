@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.db.models import Q
 from django.utils.timezone import make_aware, is_naive
@@ -92,8 +92,25 @@ def find_journeys_between_stations(from_station, to_station, date_time):
             if is_naive(departure_dt):
                 departure_dt = make_aware(departure_dt)
 
+            if to_station == journey.route.destination:
+                arrival = journey.arrival_time
+            else:
+                arrival = journey.journey_stations.get(
+                    route_station__station=to_station
+                ).arrival_time
+
+            if departure_dt.time() > arrival:
+                arrival_dt = datetime.combine(
+                    journey_date + timedelta(days=1), arrival
+                )
+            else:
+                arrival_dt = datetime.combine(journey_date, arrival)
+
+            if is_naive(arrival_dt):
+                arrival_dt = make_aware(arrival_dt)
+
             if departure_dt >= date_time:
-                matching_journeys.append((journey, departure_dt))
+                matching_journeys.append((journey, departure_dt, arrival_dt))
 
     add_journeys(journeys1)
     add_journeys(journeys2)

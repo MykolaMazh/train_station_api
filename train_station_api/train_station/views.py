@@ -401,8 +401,9 @@ class JourneySearchView(APIView):
                 "route": str(j.route),
                 "train": str(j.train),
                 "departure_time": dt.strftime("%Y-%m-%d %H:%M"),
+                "arrival_time": at.strftime("%Y-%m-%d %H:%M"),
             }
-            for j, dt in journeys
+            for j, dt, at in journeys
         ]
 
         response_data_sorted = sorted(
