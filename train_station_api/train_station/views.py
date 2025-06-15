@@ -1,8 +1,11 @@
+from typing import List
+
 from drf_spectacular.utils import (
     extend_schema,
     OpenApiParameter,
     OpenApiResponse,
     OpenApiExample,
+    OpenApiTypes,
 )
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -223,8 +226,6 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
         },
     )
     def create(self, request, *args, **kwargs):
-        # If you have custom logic *before* calling the serializer save, put it here.
-        # Otherwise, just calling super().create() is usually enough.
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
@@ -301,8 +302,6 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
         },
     )
     def update(self, request, *args, **kwargs):
-        # If you have custom logic *before* calling the serializer save, put it here.
-        # Otherwise, just calling super().create() is usually enough.
         return super().update(request, *args, **kwargs)
 
     @extend_schema(
@@ -351,8 +350,6 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
         },
     )
     def partial_update(self, request, *args, **kwargs):
-        # If you have custom logic *before* calling the serializer save, put it here.
-        # Otherwise, just calling super().create() is usually enough.
         return super().partial_update(request, *args, **kwargs)
 
     @extend_schema(
@@ -360,12 +357,56 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
         description="This endpoint allows you to delete journey witgh journey_id of the route with route_id",
     )
     def destroy(self, request, *args, **kwargs):
-        # If you have custom logic *before* calling the serializer save, put it here.
-        # Otherwise, just calling super().create() is usually enough.
         return super().destroy(request, *args, **kwargs)
 
 
 class JourneySearchView(APIView):
+
+    @extend_schema(
+        summary="Look for appropriate journey",
+        description="This endpoint allows you to find a journey according to the requirements",
+        request=JourneySearchSerializer(),
+        examples=[
+            OpenApiExample(
+                name="Example request",
+                description="Search for journey using station names",
+                value={
+                    "requested_departure_station": "Kyiv",
+                    "requested_arrival_station": "Ternopil",
+                    "requested_departure_time": "2025-06-08T01:01",
+                },
+                request_only=True,
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=List[OpenApiTypes.OBJECT],
+                description="Response of found journeys",
+                examples=[
+                    OpenApiExample(
+                        name="Example list of route journeys",
+                        value=[
+                            {
+                                "journey_id": 2,
+                                "route": "Kyiv - Lviv",
+                                "train": "TLK2135 - capacity:35",
+                                "departure_time": "2025-06-08 09:00",
+                                "arrival_time": "2025-06-08 14:30",
+                            },
+                            {
+                                "journey_id": 3,
+                                "route": "Kyiv - Lviv",
+                                "train": "TLK2031 - capacity:31",
+                                "departure_time": "2025-06-08 22:00",
+                                "arrival_time": "2025-06-09 03:00",
+                            },
+                        ],
+                        description="list of journeys",
+                    )
+                ],
+            )
+        },
+    )
     def post(self, request):
         serializer = JourneySearchSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
