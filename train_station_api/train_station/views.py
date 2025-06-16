@@ -367,7 +367,7 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
 class JourneySearchView(APIView):
 
     @extend_schema(
-        summary="Look for appropriate journey",
+        summary="Searching for journeys between stations",
         description="This endpoint allows you to find a journey according to the requirements",
         request=JourneySearchSerializer(),
         examples=[
@@ -394,15 +394,15 @@ class JourneySearchView(APIView):
                                 "journey_id": 2,
                                 "route": "Kyiv - Lviv",
                                 "train": "TLK2135 - capacity:35",
-                                "departure_time": "2025-06-08 09:00",
-                                "arrival_time": "2025-06-08 14:30",
+                                "departure_datetime": "2025-06-08 09:00",
+                                "arrival_datetime": "2025-06-08 14:30",
                             },
                             {
                                 "journey_id": 3,
                                 "route": "Kyiv - Lviv",
                                 "train": "TLK2031 - capacity:31",
-                                "departure_time": "2025-06-08 22:00",
-                                "arrival_time": "2025-06-09 03:00",
+                                "departure_datetime": "2025-06-08 22:00",
+                                "arrival_datetime": "2025-06-09 03:00",
                             },
                         ],
                         description="list of journeys",
@@ -445,14 +445,14 @@ class JourneySearchView(APIView):
                 "journey_id": j.id,
                 "route": str(j.route),
                 "train": str(j.train),
-                "departure_time": dt.strftime("%Y-%m-%d %H:%M"),
-                "arrival_time": at.strftime("%Y-%m-%d %H:%M"),
+                "departure_datetime": dt.strftime("%Y-%m-%d %H:%M"),
+                "arrival_datetime": at.strftime("%Y-%m-%d %H:%M"),
             }
             for j, dt, at in journeys
         ]
 
         response_data_sorted = sorted(
-            response_data, key=lambda x: x["departure_time"]
+            response_data, key=lambda x: x["departure_datetime"]
         )
 
         return Response(response_data_sorted, status=status.HTTP_200_OK)
@@ -460,11 +460,44 @@ class JourneySearchView(APIView):
 
 class TicketsAvailableView(APIView):
 
+    @extend_schema(
+        summary="Find available seats",
+        description="This endpoint allows you to find available seats for the journey according to the deparure and arrival time",
+        request=SearchAvailableSeatsSerializer(),
+        examples=[
+            OpenApiExample(
+                name="Example search available seats",
+                description="Search for available seats, using journey_id, departure_time, arrival_time got from 'api/v1/train_station/search-journeys/'(Searching for journeys between stations)",
+                value={
+                    "journey_id": 2,
+                    "departure_datetime": "2025-06-06T08:30",
+                    "arrival_datetime": "2025-06-06T12:45:00Z",
+                },
+                request_only=True,
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=OpenApiTypes.OBJECT,
+                description="Response of available seats for the journey",
+                examples=[
+                    OpenApiExample(
+                        name="Example of available seats",
+                        value={
+                            "1": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                            "2": [1, 4, 5, 6, 7, 8, 9, 10],
+                        },
+                        description="Response of available seats for the journey in format {'car namber':[list of available seats in car]}",
+                    )
+                ],
+            )
+        },
+    )
     def post(self, request):
         serializer = SearchAvailableSeatsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        journey_id = serializer.validated_data["journey"]
+        journey_id = serializer.validated_data["journey_id"]
         arrival_datetime = serializer.validated_data["arrival_datetime"]
         departure_datetime = serializer.validated_data["departure_datetime"]
 

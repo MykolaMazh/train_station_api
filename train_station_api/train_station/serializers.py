@@ -243,7 +243,7 @@ class JourneySearchSerializer(serializers.Serializer):
 
 
 class SearchAvailableSeatsSerializer(serializers.Serializer):
-    journey = serializers.IntegerField()
+    journey_id = serializers.IntegerField()
     departure_datetime = serializers.DateTimeField()
     arrival_datetime = serializers.DateTimeField()
 

@@ -306,10 +306,10 @@ class OrderTest(TestCase):
         response = self.client.post(search_url, search_journey_data, "json")
         self.assertEqual(len(response.data), 2)
         self.assertEqual(
-            response.data[0]["departure_time"], "2025-06-08 10:47"
+            response.data[0]["departure_datetime"], "2025-06-08 10:47"
         )
         self.assertEqual(
-            response.data[1]["departure_time"], "2025-06-08 22:00"
+            response.data[1]["departure_datetime"], "2025-06-08 22:00"
         )
 
     def test_no_same_seat_occupy(self):
