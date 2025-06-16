@@ -242,6 +242,19 @@ class JourneySearchSerializer(serializers.Serializer):
     requested_departure_time = serializers.DateTimeField()
 
 
+class SearchAvailableSeatsSerializer(serializers.Serializer):
+    journey = serializers.IntegerField()
+    departure_datetime = serializers.DateTimeField()
+    arrival_datetime = serializers.DateTimeField()
+
+    def validate(self, data):
+        if data["arrival_datetime"] <= data["departure_datetime"]:
+            raise serializers.ValidationError(
+                "Arrival must be after departure."
+            )
+        return data
+
+
 class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -277,3 +290,19 @@ class OrderSerializer(serializers.ModelSerializer):
                     raise DRFValidationError(e.messages)
                 ticket.save()
             return order
+
+    def update(self, instance, validated_data):
+        tickets_data = validated_data.pop("tickets", None)
+
+        # Update the Route fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if tickets_data is not None:
+            # Clear and recreate route stations
+            instance.tickets.all().delete()
+            for ticket_data in tickets_data:
+                Ticket.objects.create(order=instance, **ticket_data)
+
+        return instance

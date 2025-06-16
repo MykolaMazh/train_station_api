@@ -1,5 +1,6 @@
 from typing import List
 
+from django.db.models import Q
 from drf_spectacular.utils import (
     extend_schema,
     OpenApiParameter,
@@ -8,6 +9,7 @@ from drf_spectacular.utils import (
     OpenApiTypes,
 )
 from rest_framework.exceptions import NotFound
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, viewsets
@@ -21,6 +23,7 @@ from train_station.models import (
     TrainType,
     Route,
     Order,
+    Ticket,
 )
 from train_station.permissions import IsAdminOrReadOnly
 from train_station.serializers import (
@@ -37,6 +40,7 @@ from train_station.serializers import (
     RouteJourneysListSerializer,
     JourneySearchSerializer,
     OrderSerializer,
+    SearchAvailableSeatsSerializer,
 )
 from train_station.utils import find_journeys_between_stations
 
@@ -452,6 +456,60 @@ class JourneySearchView(APIView):
         )
 
         return Response(response_data_sorted, status=status.HTTP_200_OK)
+
+
+class TicketsAvailableView(APIView):
+
+    def post(self, request):
+        serializer = SearchAvailableSeatsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        journey_id = serializer.validated_data["journey"]
+        arrival_datetime = serializer.validated_data["arrival_datetime"]
+        departure_datetime = serializer.validated_data["departure_datetime"]
+
+        journey = get_object_or_404(
+            Journey.objects.select_related("train"), pk=journey_id
+        )
+
+        tickets_bought = (
+            Ticket.objects.filter(journey=journey_id)
+            .filter(
+                Q(
+                    computed_arrival_datetime__gte=departure_datetime,
+                    computed_arrival_datetime__lte=arrival_datetime,
+                )
+                | Q(
+                    computed_departure_datetime__gte=departure_datetime,
+                    computed_departure_datetime__lte=arrival_datetime,
+                )
+            )
+            .values("car", "seat")
+        )
+
+        seats_occupied = {}
+        for car_seat in tickets_bought:  # {"car": 2, "seat": 2}
+            seats_occupied.setdefault(car_seat["car"], []).append(
+                car_seat["seat"]
+            )
+
+        cars_number = journey.train.car_num
+        seats_number = journey.train.places_in_car
+        all_seats = {
+            car: [seat for seat in range(1, seats_number + 1)]
+            for car in range(1, cars_number + 1)
+        }
+
+        seats_available = {
+            car: [
+                seat
+                for seat in all_seats[car]
+                if seat not in seats_occupied.get(car, [])
+            ]
+            for car in all_seats
+        }
+
+        return Response(seats_available, status=status.HTTP_200_OK)
 
 
 class OrderViewSet(viewsets.ModelViewSet):

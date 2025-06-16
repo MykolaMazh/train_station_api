@@ -12,6 +12,7 @@ from train_station.views import (
     RouteJourneysViewSet,
     JourneySearchView,
     OrderViewSet,
+    TicketsAvailableView,
 )
 
 app_name = "train_station"
@@ -55,4 +56,5 @@ urlpatterns = [
     path(
         "search-journeys/", JourneySearchView.as_view(), name="search-journeys"
     ),
+    path("find-seats/", TicketsAvailableView.as_view(), name="find-seats"),
 ]

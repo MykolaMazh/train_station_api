@@ -76,6 +76,8 @@ class Ticket(models.Model):
         "Order", on_delete=models.CASCADE, related_name="tickets"
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    computed_departure_datetime = models.DateTimeField(null=True, blank=True)
+    computed_arrival_datetime = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return (
@@ -185,6 +187,8 @@ class Ticket(models.Model):
         using=None,
         update_fields=None,
     ):
+        self.computed_departure_datetime = self.departure_datetime
+        self.computed_arrival_datetime = self.arrival_datetime
         self.full_clean()  # Calls the clean method before saving
         return super().save(force_insert, force_update, using, update_fields)
 
