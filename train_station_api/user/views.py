@@ -12,7 +12,8 @@ class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
 
     @extend_schema(
-        description="Create a new user by providing the necessary details (email, password).",
+        description="Create a new user by providing"
+        " the necessary details (email, password).",
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)

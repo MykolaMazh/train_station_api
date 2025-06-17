@@ -168,15 +168,17 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
     )
     def list(self, request, *args, **kwargs):
         """
-        Retrieve a list of journeys for the given route.
-        Returns a list of journeys with their associated train, crew, departure time, etc.
+
+        Returns a list of journeys with their associated data.
         """
         return super().list(request, *args, **kwargs)
 
     @extend_schema(
         summary="Create a new Journey",
-        description="This endpoint allows you to create a new journey with its associated route, train, crew, and schedule details.",
-        request=RouteJourneysSerializer(),  # Specify the serializer for the request body
+        description="This endpoint allows you to create a new journey"
+        " with its associated route, train, crew,"
+        " and schedule details.",
+        request=RouteJourneysSerializer(),
         examples=[
             OpenApiExample(
                 "Successful Journey Creation Request",
@@ -251,13 +253,15 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary="Update the journey of the route",
-        description="This endpoint allows you to Update the journey of the route",
-        request=RouteJourneysSerializer(),  # Specify the serializer for the request body
+        description="This endpoint allows you to update"
+        " the journey of the route",
+        request=RouteJourneysSerializer(),
         examples=[
             OpenApiExample(
                 "Successful Journey updation Request",
                 summary="Example request for updating the journey.",
-                description="Journey with route_id and journey_id is been updated",
+                description="Journey with route_id and journey_id"
+                " is been updated",
                 value={
                     "train": 3,
                     "crew": [1, 2],
@@ -273,7 +277,7 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
                         }
                     ],
                 },
-                request_only=True,  # This example is only for the request body
+                request_only=True,
             )
         ],
         responses={
@@ -310,18 +314,20 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary="Partially Update the journey of the route",
-        description="This endpoint allows you to update some fields of the journey of the route",
-        request=RouteJourneysSerializer(),  # Specify the serializer for the request body
+        description="This endpoint allows you to update some "
+        "fields of the journey of the route",
+        request=RouteJourneysSerializer(),
         examples=[
             OpenApiExample(
                 "Successful Journey updation Request",
                 summary="Example request for updating the journey.",
-                description="Journey with route_id and journey_id is been updated",
+                description="Journey with route_id and journey_id"
+                " is been updated",
                 value={
                     "train": 4,
                     "crew": [1, 3],
                 },
-                request_only=True,  # This example is only for the request body
+                request_only=True,
             )
         ],
         responses={
@@ -358,7 +364,8 @@ class RouteJourneysViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary="Delete the journey of the route",
-        description="This endpoint allows you to delete journey witgh journey_id of the route with route_id",
+        description="This endpoint allows you to delete journey"
+        " with journey_id of the route with route_id",
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
@@ -368,7 +375,8 @@ class JourneySearchView(APIView):
 
     @extend_schema(
         summary="Searching for journeys between stations",
-        description="This endpoint allows you to find a journey according to the requirements",
+        description="This endpoint allows you to find a journey"
+        " according to the requirements",
         request=JourneySearchSerializer(),
         examples=[
             OpenApiExample(
@@ -462,12 +470,16 @@ class TicketsAvailableView(APIView):
 
     @extend_schema(
         summary="Find available seats",
-        description="This endpoint allows you to find available seats for the journey according to the deparure and arrival time",
+        description="This endpoint allows you to find available seats for "
+        "the journey according to the deparure and arrival time",
         request=SearchAvailableSeatsSerializer(),
         examples=[
             OpenApiExample(
                 name="Example search available seats",
-                description="Search for available seats, using journey_id, departure_time, arrival_time got from 'api/v1/train_station/search-journeys/'(Searching for journeys between stations)",
+                description="Search for available seats, using journey_id,"
+                " departure_time, arrival_time "
+                "got from 'api/v1/train_station/search-journeys/'"
+                "(Searching for journeys between stations)",
                 value={
                     "journey_id": 2,
                     "departure_datetime": "2025-06-06T08:30",
@@ -487,7 +499,9 @@ class TicketsAvailableView(APIView):
                             "1": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                             "2": [1, 4, 5, 6, 7, 8, 9, 10],
                         },
-                        description="Response of available seats for the journey in format {'car namber':[list of available seats in car]}",
+                        description="Response of available seats"
+                        " for the journey in format"
+                        " {'car namber':[list of available seats in car]}",
                     )
                 ],
             )
