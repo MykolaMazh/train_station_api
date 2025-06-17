@@ -5,5 +5,3 @@ db.sqlite3
 schema.png
 db.json
 __pycache__/
-t.py
-create_request.py
