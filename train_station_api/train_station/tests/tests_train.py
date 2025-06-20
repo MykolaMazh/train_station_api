@@ -18,7 +18,6 @@ from train_station.models import (
     Journey,
     Ticket,
 )
-from train_station.serializers import JourneySearchSerializer
 
 
 class OrderTest(TestCase):
