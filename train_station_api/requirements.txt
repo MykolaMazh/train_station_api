@@ -10,6 +10,7 @@ django-extensions==3.2.3
 djangorestframework==3.15.2
 djangorestframework_simplejwt==5.5.0
 drf-spectacular==0.28.0
+gunicorn==23.0.0
 idna==3.10
 inflection==0.5.1
 jsonschema==4.24.0
@@ -17,10 +18,8 @@ jsonschema-specifications==2025.4.1
 mypy-extensions==1.0.0
 packaging==24.2
 pathspec==0.12.1
-pillow==11.0.0
 platformdirs==4.3.7
 psycopg2-binary==2.9.10
-pygraphviz==1.14
 PyJWT==2.9.0
 python-dotenv==1.1.0
 PyYAML==6.0.2
