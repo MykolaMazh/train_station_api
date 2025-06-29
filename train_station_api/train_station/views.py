@@ -392,7 +392,7 @@ class JourneySearchView(APIView):
         ],
         responses={
             200: OpenApiResponse(
-                response=List[OpenApiTypes.OBJECT],
+                response=List,
                 description="Response of found journeys",
                 examples=[
                     OpenApiExample(
