@@ -123,8 +123,8 @@ class RouteRetrieveSerializer(serializers.ModelSerializer):
         journeys = obj.journeys.all().order_by("departure_time")
         return [
             (
-                f"Departs at {j.departure_time.strftime("%H:%M")} "
-                f"- Arrives at {j.arrival_time.strftime("%H:%M")}"
+                f"Departs at {j.departure_time.strftime('%H:%M')} "
+                f"- Arrives at {j.arrival_time.strftime('%H:%M')}"
             )
             for j in journeys
         ]
@@ -234,8 +234,8 @@ class RouteJourneysListSerializer(serializers.ModelSerializer):
         return [
             (
                 f"{str(station.route_station.station)},"
-                f" {station.arrival_time.strftime("%H:%M")}"
-                f"-{station.departure_time.strftime("%H:%M")}"
+                f" {station.arrival_time.strftime('%H:%M')}"
+                f"-{station.departure_time.strftime('%H:%M')}"
             )
             for station in obj.journey_stations.all()
         ]
