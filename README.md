@@ -11,7 +11,7 @@ The Train Station API is a Django REST Framework project designed to provide ser
 Clone the project from GitHub:
 
 ```bash
-git clone https://github.com/MykolaMazh/train_station_api.git
+git clone --branch develop_docker --single-branch https://github.com/MykolaMazh/train_station_api.git
 ```
 
 ### 2. Set up your environment
@@ -43,10 +43,10 @@ For development, use SQLite. For production, configure PostgreSQL according to y
 
 
 
-### Documentation
+### Documentation endpoints
 
-- **Swagger UI**: `http://127.0.0.1:8000/api/doc/swagger/`
-- **ReDoc**: `http://127.0.0.1:8000/api/doc/redoc/`
+- **Swagger UI**: `api/doc/swagger/`
+- **ReDoc**: `api/doc/redoc/`
 
 
 
@@ -64,7 +64,7 @@ Use the following Docker commands.
 ### 1. Build the Docker image
 
 ```bash
-docker build -t train_station_api
+docker build . -t train_station_api
 ```
 
 ### 2. Run the Docker container

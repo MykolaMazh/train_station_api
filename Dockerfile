@@ -9,4 +9,4 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
-CMD ["python", "train_station_api/manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["sh", "-c", "python train_station_api/manage.py migrate && python train_station_api/manage.py runserver 0.0.0.0:8000"]
