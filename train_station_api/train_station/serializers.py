@@ -56,7 +56,6 @@ class RouteStationSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "station",
-            "route_ordinal_station_number",
             "route_distance_already_passed_km",
         ]
 
@@ -150,9 +149,7 @@ class RouteListSerializer(serializers.ModelSerializer):
         ]
 
     def get_route_stations(self, obj):
-        route_stations = obj.route_stations.select_related("station").order_by(
-            "route_ordinal_station_number"
-        )
+        route_stations = obj.route_stations.select_related("station")
         return [rs.station.name for rs in route_stations]
 
 

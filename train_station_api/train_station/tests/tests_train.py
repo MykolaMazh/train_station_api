@@ -104,17 +104,14 @@ class OrderTest(TestCase):
             "route_stations": [
                 {
                     "station": 2,
-                    "route_ordinal_station_number": 1,
                     "route_distance_already_passed_km": 150,
                 },
                 {
                     "station": 3,
-                    "route_ordinal_station_number": 2,
                     "route_distance_already_passed_km": 280,
                 },
                 {
                     "station": 4,
-                    "route_ordinal_station_number": 3,
                     "route_distance_already_passed_km": 480,
                 },
             ],
@@ -172,17 +169,14 @@ class OrderTest(TestCase):
             "route_stations": [
                 {
                     "station": 4,
-                    "route_ordinal_station_number": 1,
                     "route_distance_already_passed_km": 250,
                 },
                 {
                     "station": 5,
-                    "route_ordinal_station_number": 2,
                     "route_distance_already_passed_km": 380,
                 },
                 {
                     "station": 6,
-                    "route_ordinal_station_number": 3,
                     "route_distance_already_passed_km": 450,
                 },
             ],

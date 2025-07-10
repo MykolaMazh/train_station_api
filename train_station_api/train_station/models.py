@@ -58,6 +58,27 @@ class Route(models.Model):
     def __str__(self):
         return f"{self.source} - {self.destination}"
 
+    @property
+    def route_station_numbers(self):
+        a = {
+            route_station.id: index
+            for index, route_station in enumerate(
+                self.route_stations.order_by(
+                    "route_distance_already_passed_km"
+                ),
+                start=1,
+            )
+        }
+        return {
+            route_station.id: index
+            for index, route_station in enumerate(
+                self.route_stations.order_by(
+                    "route_distance_already_passed_km"
+                ),
+                start=1,
+            )
+        }
+
 
 class Ticket(models.Model):
     departure_station = models.ForeignKey(
@@ -222,18 +243,12 @@ class Station(models.Model):
         if station == route.destination:
             return 1000
 
-        route_station = next(
-            (
-                _route_station
-                for _route_station in route.route_stations.all()
-                if _route_station.station_id == station.id
-            ),
-            None,
-        )
+        route_station = route.route_stations.filter(
+            station_id=station.id
+        ).first()
         if route_station is None:
             raise ValueError(f"Station {station} not in route {route}")
-
-        return route_station.route_ordinal_station_number
+        return route.route_station_numbers.get(route_station.id)
 
     def __str__(self):
         return self.name
@@ -247,9 +262,6 @@ class RouteStation(models.Model):
     )
     station = models.ForeignKey(
         Station, on_delete=models.CASCADE, related_name="route_stations"
-    )
-    route_ordinal_station_number = models.PositiveSmallIntegerField(
-        help_text="Ordinal number from route source"
     )
     route_distance_already_passed_km = models.PositiveSmallIntegerField()
 
