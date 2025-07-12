@@ -60,15 +60,6 @@ class Route(models.Model):
 
     @property
     def route_station_numbers(self):
-        a = {
-            route_station.id: index
-            for index, route_station in enumerate(
-                self.route_stations.order_by(
-                    "route_distance_already_passed_km"
-                ),
-                start=1,
-            )
-        }
         return {
             route_station.id: index
             for index, route_station in enumerate(
