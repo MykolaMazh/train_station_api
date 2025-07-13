@@ -41,6 +41,7 @@ from train_station.serializers import (
     JourneySearchSerializer,
     OrderSerializer,
     SearchAvailableSeatsSerializer,
+    OrderListSerializer,
 )
 from train_station.utils import find_journeys_between_stations
 
@@ -575,3 +576,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return OrderListSerializer
+        return self.serializer_class

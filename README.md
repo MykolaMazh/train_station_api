@@ -64,13 +64,13 @@ Use the following Docker commands.
 ### 1. Build the Docker image
 
 ```bash
-docker build . -t train_station_api
+docker build train_station_api/ -t train_station_api
 ```
 
 ### 2. Run the Docker container
 
 ```bash
-docker run --name train_station -p 8000:8000 train_station_api
+docker run --name train_station -p 8010:8000 train_station_api
 ```
 
 ### User Endpoints

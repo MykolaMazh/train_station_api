@@ -272,13 +272,19 @@ class TicketSerializer(serializers.ModelSerializer):
         ]
 
 
+class TicketListSerializer(TicketSerializer):
+    departure_station = serializers.StringRelatedField()
+    arrival_station = serializers.StringRelatedField()
+    journey = serializers.StringRelatedField()
+
+
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True)
 
     class Meta:
         model = Order
-        fields = ["id", "user", "tickets", "created_at"]
-        read_only_fields = ["user", "created_at"]
+        fields = ["id", "tickets", "created_at"]
+        read_only_fields = ["created_at"]
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -308,3 +314,7 @@ class OrderSerializer(serializers.ModelSerializer):
                 Ticket.objects.create(order=instance, **ticket_data)
 
         return instance
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketListSerializer(many=True)
